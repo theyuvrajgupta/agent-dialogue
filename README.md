@@ -1,16 +1,40 @@
-# React + Vite
+# Agent Dialogue
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A two-agent AI debate interface powered by Claude. Two personas with opposing viewpoints — The Operator (skeptic COO) and The Futurist (enthusiast CAIO) — argue a topic of your choice in real time.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Configurable debate topic and number of turns
+- Randomised emotional stances per run for varied output
+- Light/dark mode via CSS design tokens
+- Proxied Anthropic API calls to avoid CORS issues
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+```
 
-## Expanding the ESLint configuration
+Copy the env file and add your Anthropic API key:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+cp .env.example .env
+```
+
+```env
+VITE_ANTHROPIC_API_KEY=your-key-here
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+## Stack
+
+- React 19 + Vite
+- Anthropic API (`claude-sonnet-4-20250514`)
+- No UI library — plain inline styles with CSS custom properties
