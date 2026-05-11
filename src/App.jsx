@@ -61,7 +61,7 @@ export default function AgentDialogue() {
       ? `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
       : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
 
-    const res = await fetch("/anthropic/v1/messages", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
