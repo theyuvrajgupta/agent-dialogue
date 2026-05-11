@@ -33,6 +33,12 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173).
 
+## Deploying to Vercel
+
+1. Import the repo at [vercel.com/new](https://vercel.com/new) — Vite is auto-detected
+2. Add `VITE_ANTHROPIC_API_KEY` under Settings → Environment Variables
+3. Deploy — the included `vercel.json` handles SPA routing
+
 ## Stack
 
 - React 19 + Vite
