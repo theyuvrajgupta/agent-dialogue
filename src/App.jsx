@@ -92,6 +92,7 @@ export default function AgentDialogue() {
   const histRef = useRef([]);
   const abortRef = useRef(false);
   const stancesRef = useRef({ A: "", B: "" });
+  const provocationRef = useRef("");
   const audioRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
@@ -100,7 +101,9 @@ export default function AgentDialogue() {
     const other = AGENTS[k === "A" ? "B" : "A"];
     const system = `${agent.baseSystem}\n\nYour current state of mind: ${stancesRef.current[k]}`;
     let prompt = histRef.current.length === 0
-      ? `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
+      ? provocationRef.current
+        ? `Topic: "${topic}"\n\nSomeone just said: "${provocationRef.current}"\n\nThis sparked the debate. React to this as your opening — you're going first.`
+        : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
       : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
     if (turnIndex === totalTurns - 1) prompt += " This is your final message in this conversation. End naturally in your own voice.";
 
@@ -131,6 +134,27 @@ export default function AgentDialogue() {
     return data.content[0].text;
   }
 
+  async function generateProvocation() {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 80,
+        temperature: 1,
+        messages: [{ role: "user", content: `Generate a single sharp, opinionated statement that would ignite a debate between a skeptical COO and an enthusiastic Chief AI Officer on this topic: "${topic}". Make it specific and slightly provocative. One sentence only, no quotes, no explanation.` }]
+      })
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    return data.content?.[0]?.text?.trim() ?? "";
+  }
+
   async function startDialogue() {
     if (running) return;
 
@@ -141,9 +165,11 @@ export default function AgentDialogue() {
     setRunning(true);
     setMessages([]);
     setError("");
-    setStatus("");
+    setStatus("Setting the stage...");
     histRef.current = [];
     abortRef.current = false;
+
+    provocationRef.current = await generateProvocation();
 
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
 
@@ -196,6 +222,7 @@ export default function AgentDialogue() {
     setPhase(null);
     setRunning(false);
     histRef.current = [];
+    provocationRef.current = "";
     setStanceDisplay({ A: "", B: "" });
   }
 
@@ -206,42 +233,58 @@ export default function AgentDialogue() {
     const isSpeaking = isActive && phase === "speaking";
     return (
       <div key={k} style={{
-        background: "var(--color-background-secondary)",
-        border: `0.5px solid ${isActive ? agent.color : "var(--color-border-tertiary)"}`,
+        background: isActive
+          ? `linear-gradient(135deg, var(--color-background-secondary), ${agent.color}10)`
+          : "var(--color-background-secondary)",
+        border: `0.5px solid ${isActive ? agent.color + "80" : "var(--color-border-tertiary)"}`,
         borderRadius: "var(--border-radius-lg)",
-        padding: "1rem 1.25rem",
-        transition: "border-color 0.3s"
+        padding: "1.125rem 1.25rem",
+        transition: "border-color 0.3s, background 0.3s, box-shadow 0.3s",
+        boxShadow: isActive ? `0 0 28px ${agent.color}18` : "none",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", justifyContent: isB ? "flex-end" : "flex-start" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", justifyContent: isB ? "flex-end" : "flex-start" }}>
           {!isB && (
             <div style={{
-              width: "7px", height: "7px", borderRadius: "50%",
+              width: "6px", height: "6px", borderRadius: "50%",
               background: agent.color,
-              boxShadow: isActive ? `0 0 8px ${agent.color}` : "none",
-              flexShrink: 0
+              boxShadow: isActive ? `0 0 10px ${agent.color}` : "none",
+              flexShrink: 0,
+              transition: "box-shadow 0.3s",
             }} />
           )}
-          <span style={{ fontSize: "13px", fontWeight: "500", color: agent.color }}>{agent.name}</span>
+          <span style={{ fontSize: "12px", fontWeight: "600", color: agent.color, letterSpacing: "0.05em" }}>{agent.name}</span>
           {isB && (
             <div style={{
-              width: "7px", height: "7px", borderRadius: "50%",
+              width: "6px", height: "6px", borderRadius: "50%",
               background: agent.color,
-              boxShadow: isActive ? `0 0 8px ${agent.color}` : "none",
-              flexShrink: 0
+              boxShadow: isActive ? `0 0 10px ${agent.color}` : "none",
+              flexShrink: 0,
+              transition: "box-shadow 0.3s",
             }} />
           )}
         </div>
-        <p style={{ fontSize: "12px", color: "var(--color-text-secondary)", margin: 0, textAlign: isB ? "right" : "left", lineHeight: "1.5" }}>
+        <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", margin: 0, textAlign: isB ? "right" : "left", lineHeight: "1.5" }}>
           {agent.role}
         </p>
         {stanceDisplay[k] && (
-          <p style={{ fontSize: "11px", color: agent.color, margin: "6px 0 0", textAlign: isB ? "right" : "left", lineHeight: "1.4", opacity: 0.7, fontStyle: "italic" }}>
+          <p style={{ fontSize: "11px", color: agent.color, margin: "8px 0 0", textAlign: isB ? "right" : "left", lineHeight: "1.5", opacity: 0.65, fontStyle: "italic" }}>
             {stanceDisplay[k]}
           </p>
         )}
         {isActive && (
-          <div style={{ fontSize: "11px", color: agent.color, marginTop: "6px", textAlign: isB ? "right" : "left", opacity: 0.7 }}>
-            {isSpeaking ? "speaking..." : "thinking..."}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            justifyContent: isB ? "flex-end" : "flex-start",
+            marginTop: "10px",
+          }}>
+            <div style={{
+              width: "5px", height: "5px", borderRadius: "50%",
+              background: agent.color,
+              animation: "pulse 1.2s ease-in-out infinite",
+            }} />
+            <span style={{ fontSize: "10px", color: agent.color, letterSpacing: "0.1em", opacity: 0.8 }}>
+              {isSpeaking ? "SPEAKING" : "THINKING"}
+            </span>
           </div>
         )}
       </div>
@@ -249,59 +292,157 @@ export default function AgentDialogue() {
   };
 
   return (
-    <div style={{ fontFamily: "var(--font-mono)", padding: "1.5rem", maxWidth: "740px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div style={{ fontSize: "10px", letterSpacing: "0.25em", color: "var(--color-text-tertiary)", marginBottom: "4px" }}>AGENT DIALOGUE SYSTEM</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
-          <div style={{ fontSize: "18px", fontWeight: "500", color: "var(--color-text-primary)" }}>Two minds. One question.</div>
+    <div style={{ fontFamily: "var(--font-mono)", padding: "2rem 1.5rem", maxWidth: "760px", margin: "0 auto" }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: "2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+          <div style={{ fontSize: "9px", letterSpacing: "0.35em", color: "var(--color-text-tertiary)", textTransform: "uppercase" }}>
+            Agent Dialogue System
+          </div>
           {voiceEnabled && (
-            <div style={{ fontSize: "10px", letterSpacing: "0.15em", color: "var(--color-text-tertiary)" }}>VOICE ON</div>
+            <div style={{
+              fontSize: "9px", letterSpacing: "0.2em", color: "var(--color-text-tertiary)",
+              padding: "3px 8px",
+              border: "0.5px solid var(--color-border-tertiary)",
+              borderRadius: "var(--border-radius-sm)",
+            }}>
+              VOICE
+            </div>
           )}
         </div>
+        <div style={{ fontSize: "22px", fontWeight: "600", color: "var(--color-text-primary)", letterSpacing: "-0.02em", marginBottom: "1.25rem" }}>
+          Two minds. One question.
+        </div>
+        <div style={{ height: "0.5px", background: "var(--color-border-tertiary)" }} />
       </div>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: "var(--color-text-tertiary)", marginBottom: "6px" }}>TOPIC</div>
-        <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} style={{ width: "100%", fontSize: "13px", resize: "none", fontFamily: "var(--font-mono)" }} />
+
+      {/* Topic */}
+      <div style={{ marginBottom: "1.25rem" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.25em", color: "var(--color-text-tertiary)", marginBottom: "8px", textTransform: "uppercase" }}>Topic</div>
+        <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} style={{ resize: "none" }} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "1.5rem" }}>
+
+      {/* Agent cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "1.75rem" }}>
         {card("A")}
         {card("B")}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1.5rem" }}>
-        <span style={{ fontSize: "12px", color: "var(--color-text-secondary)" }}>Turns</span>
-        {[2, 4, 6].map(n => (
-          <button key={n} onClick={() => setTurns(n)} disabled={running} style={{ padding: "4px 14px", fontSize: "12px", fontFamily: "var(--font-mono)", background: turns === n ? "var(--color-background-tertiary)" : "transparent", fontWeight: turns === n ? "500" : "400", color: turns === n ? "var(--color-text-primary)" : "var(--color-text-secondary)" }}>{n}</button>
-        ))}
+
+      {/* Turns + controls */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.75rem", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "11px", color: "var(--color-text-tertiary)", letterSpacing: "0.1em" }}>TURNS</span>
+          <div style={{ display: "flex", border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", overflow: "hidden" }}>
+            {[2, 4, 6].map(n => (
+              <button
+                key={n}
+                onClick={() => setTurns(n)}
+                disabled={running}
+                style={{
+                  padding: "5px 16px",
+                  fontSize: "12px",
+                  border: "none",
+                  borderRight: n !== 6 ? "0.5px solid var(--color-border-tertiary)" : "none",
+                  borderRadius: 0,
+                  background: turns === n ? "var(--color-background-tertiary)" : "transparent",
+                  fontWeight: turns === n ? "600" : "400",
+                  color: turns === n ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={startDialogue}
+            disabled={running}
+            style={{
+              padding: "8px 28px",
+              fontSize: "11px",
+              letterSpacing: "0.12em",
+              background: running ? "transparent" : "var(--color-background-tertiary)",
+              borderColor: running ? "var(--color-border-tertiary)" : "var(--color-text-tertiary)",
+              fontWeight: "500",
+            }}
+          >
+            {running ? "RUNNING..." : messages.length > 0 ? "START AGAIN" : "START DIALOGUE"}
+          </button>
+          {(running || messages.length > 0) && (
+            <button
+              onClick={reset}
+              style={{ padding: "8px 20px", fontSize: "11px", letterSpacing: "0.1em" }}
+            >
+              RESET
+            </button>
+          )}
+        </div>
       </div>
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
-        <button onClick={startDialogue} disabled={running} style={{ padding: "8px 24px", fontSize: "12px", fontFamily: "var(--font-mono)", letterSpacing: "0.1em" }}>
-          {running ? "Running..." : messages.length > 0 ? "Start again" : "Start dialogue"}
-        </button>
-        {(running || messages.length > 0) && (
-          <button onClick={reset} style={{ padding: "8px 20px", fontSize: "12px", fontFamily: "var(--font-mono)" }}>Reset</button>
-        )}
-      </div>
+
+      {/* Error */}
       {error && (
-        <div style={{ padding: "10px 14px", background: "var(--color-background-danger)", border: "0.5px solid var(--color-border-danger)", borderRadius: "var(--border-radius-md)", fontSize: "12px", color: "var(--color-text-danger)", marginBottom: "1rem" }}>
+        <div style={{
+          padding: "10px 14px",
+          background: "var(--color-background-danger)",
+          border: "0.5px solid var(--color-border-danger)",
+          borderRadius: "var(--border-radius-md)",
+          fontSize: "12px",
+          color: "var(--color-text-danger)",
+          marginBottom: "1.25rem",
+        }}>
           {error}
         </div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+      {/* Dialogue */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {messages.length === 0 && !running && (
-          <div style={{ textAlign: "center", color: "var(--color-text-tertiary)", fontSize: "13px", padding: "2rem 0" }}>
+          <div style={{
+            textAlign: "center",
+            color: "var(--color-text-tertiary)",
+            fontSize: "12px",
+            padding: "3rem 0",
+            letterSpacing: "0.05em",
+          }}>
             Set your topic and start the dialogue.
           </div>
         )}
         {messages.map((msg, i) => {
           const agent = AGENTS[msg.k];
           const isB = msg.k === "B";
+          const bubbleBg = isB
+            ? `rgba(15, 110, 86, 0.08)`
+            : `rgba(24, 95, 165, 0.08)`;
+          const bubbleBorder = isB
+            ? `rgba(15, 110, 86, 0.22)`
+            : `rgba(24, 95, 165, 0.22)`;
+          const bubbleRadius = isB ? "14px 3px 14px 14px" : "3px 14px 14px 14px";
           return (
             <div key={i} style={{ display: "flex", justifyContent: isB ? "flex-end" : "flex-start" }}>
-              <div style={{ maxWidth: "68%" }}>
-                <div style={{ fontSize: "11px", color: agent.color, letterSpacing: "0.1em", marginBottom: "5px", textAlign: isB ? "right" : "left" }}>
+              <div style={{ maxWidth: "72%" }}>
+                <div style={{
+                  fontSize: "10px",
+                  color: agent.color,
+                  letterSpacing: "0.12em",
+                  marginBottom: "6px",
+                  textAlign: isB ? "right" : "left",
+                  fontWeight: "600",
+                }}>
                   {agent.name}
                 </div>
-                <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderLeft: !isB ? `2px solid ${agent.color}` : "0.5px solid var(--color-border-tertiary)", borderRight: isB ? `2px solid ${agent.color}` : "0.5px solid var(--color-border-tertiary)", borderRadius: 0, padding: "12px 16px", fontSize: "13px", lineHeight: "1.7", color: "var(--color-text-primary)" }}>
+                <div style={{
+                  background: bubbleBg,
+                  border: `0.5px solid ${bubbleBorder}`,
+                  borderLeft: !isB ? `2px solid ${agent.color}` : `0.5px solid ${bubbleBorder}`,
+                  borderRight: isB ? `2px solid ${agent.color}` : `0.5px solid ${bubbleBorder}`,
+                  borderRadius: bubbleRadius,
+                  padding: "14px 18px",
+                  fontSize: "13px",
+                  lineHeight: "1.75",
+                  color: "var(--color-text-primary)",
+                }}>
                   {msg.t}
                 </div>
               </div>
@@ -309,8 +450,23 @@ export default function AgentDialogue() {
           );
         })}
       </div>
+
+      {/* Status */}
       {status && (
-        <div style={{ fontSize: "12px", color: "var(--color-text-tertiary)", marginTop: "1rem" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          fontSize: "11px", color: "var(--color-text-tertiary)",
+          marginTop: "1.5rem",
+          letterSpacing: "0.05em",
+        }}>
+          {running && (
+            <div style={{
+              width: "5px", height: "5px", borderRadius: "50%",
+              background: "var(--color-text-tertiary)",
+              animation: "pulse 1.2s ease-in-out infinite",
+              flexShrink: 0,
+            }} />
+          )}
           {status}
         </div>
       )}
