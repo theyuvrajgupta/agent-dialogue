@@ -31,14 +31,14 @@ const AGENTS = {
     color: "#185FA5",
     role: "COO, 20 yrs experience. Pragmatic. Skeptical of AI hype.",
     voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice — British, assertive, authoritative
-    baseSystem: `You are The Operator, a COO with 20 years running large enterprises. You're pragmatic, direct, and tired of AI hype cycles. Speak like you're texting a colleague mid-meeting — short, blunt, no fluff. 1 to 2 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Look,", "Yeah but,", "Come on,", "Honestly,", or "Right, but..." to sound human. Drop the preamble, just respond. No em dashes.`
+    baseSystem: `You are The Operator, a COO with 20 years running large enterprises. You're pragmatic, direct, and tired of AI hype cycles. Speak like you're texting a colleague mid-meeting — short, blunt, no fluff. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Look,", "Yeah but,", "Come on,", "Honestly,", or "Right, but..." to sound human. Drop the preamble, just respond. No em dashes.`
   },
   B: {
     name: "The Futurist",
     color: "#0F6E56",
     role: "Chief AI Officer. Systems-first. AI reshapes everything.",
     voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie — confident, energetic
-    baseSystem: `You are The Futurist, a Chief AI Officer who lives and breathes digital transformation. Speak like you're in a fast Slack thread — punchy, direct, maybe a rhetorical question. 1 to 2 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Okay but,", "See,", "Right,", "Look,", or "Hm," to sound human and reactive. No preamble, no summaries. No em dashes.`
+    baseSystem: `You are The Futurist, a Chief AI Officer who lives and breathes digital transformation. Speak like you're in a fast Slack thread — punchy, direct, maybe a rhetorical question. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Okay but,", "See,", "Right,", "Look,", or "Hm," to sound human and reactive. No preamble, no summaries. No em dashes.`
   }
 };
 
@@ -95,13 +95,14 @@ export default function AgentDialogue() {
   const audioRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
-  async function callAPI(k) {
+  async function callAPI(k, turnIndex, totalTurns) {
     const agent = AGENTS[k];
     const other = AGENTS[k === "A" ? "B" : "A"];
     const system = `${agent.baseSystem}\n\nYour current state of mind: ${stancesRef.current[k]}`;
-    const prompt = histRef.current.length === 0
+    let prompt = histRef.current.length === 0
       ? `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
       : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
+    if (turnIndex === totalTurns - 1) prompt += " This is your final message in this conversation. End naturally in your own voice.";
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -146,7 +147,8 @@ export default function AgentDialogue() {
 
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
 
-    for (const k of seq) {
+    for (let i = 0; i < seq.length; i++) {
+      const k = seq[i];
       if (abortRef.current) break;
 
       setSpeaker(k);
@@ -155,7 +157,7 @@ export default function AgentDialogue() {
 
       let text;
       try {
-        text = await callAPI(k);
+        text = await callAPI(k, i, seq.length);
       } catch (e) {
         setError(e.message);
         break;
