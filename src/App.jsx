@@ -105,6 +105,7 @@ export default function AgentDialogue() {
         ? `Topic: "${topic}"\n\nSomeone just said: "${provocationRef.current}"\n\nThis sparked the debate. React to this as your opening — you're going first.`
         : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
       : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
+    if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2) prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";
     if (turnIndex === totalTurns - 1) prompt += " This is your final message in this conversation. End naturally in your own voice.";
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
