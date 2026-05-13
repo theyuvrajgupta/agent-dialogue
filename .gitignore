@@ -14,6 +14,12 @@ dist-ssr
 
 .env
 
+# Generated test audio
+*.mp3
+
+# Claude Code session data
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

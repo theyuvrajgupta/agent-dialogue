@@ -30,15 +30,48 @@ const AGENTS = {
     name: "The Operator",
     color: "#185FA5",
     role: "COO, 20 yrs experience. Pragmatic. Skeptical of AI hype.",
+    voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice — British, assertive, authoritative
     baseSystem: `You are The Operator, a COO with 20 years running large enterprises. You're pragmatic, direct, and tired of AI hype cycles. Speak like you're texting a colleague mid-meeting — short, blunt, no fluff. 1 to 2 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Look,", "Yeah but,", "Come on,", "Honestly,", or "Right, but..." to sound human. Drop the preamble, just respond. No em dashes.`
   },
   B: {
     name: "The Futurist",
     color: "#0F6E56",
     role: "Chief AI Officer. Systems-first. AI reshapes everything.",
+    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie — confident, energetic
     baseSystem: `You are The Futurist, a Chief AI Officer who lives and breathes digital transformation. Speak like you're in a fast Slack thread — punchy, direct, maybe a rhetorical question. 1 to 2 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Okay but,", "See,", "Right,", "Look,", or "Hm," to sound human and reactive. No preamble, no summaries. No em dashes.`
   }
 };
+
+async function synthesizeAndPlay(text, voiceId, audioRef) {
+  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+  if (!apiKey) return;
+
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "xi-api-key": apiKey
+    },
+    body: JSON.stringify({
+      text,
+      model_id: "eleven_turbo_v2",
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+    })
+  });
+
+  if (!res.ok) return; // silent fallback
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audioRef.current = audio;
+
+  await new Promise((resolve) => {
+    audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve(); };
+    audio.onerror = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve(); };
+    audio.play().catch(() => resolve()); // autoplay blocked — resolve silently
+  });
+}
 
 export default function AgentDialogue() {
   const [turns, setTurns] = useState(4);
@@ -46,12 +79,15 @@ export default function AgentDialogue() {
   const [messages, setMessages] = useState([]);
   const [running, setRunning] = useState(false);
   const [speaker, setSpeaker] = useState(null);
+  const [phase, setPhase] = useState(null); // "thinking" | "speaking"
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [stanceDisplay, setStanceDisplay] = useState({ A: "", B: "" });
   const histRef = useRef([]);
   const abortRef = useRef(false);
   const stancesRef = useRef({ A: "", B: "" });
+  const audioRef = useRef(null);
+  const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
   async function callAPI(k) {
     const agent = AGENTS[k];
@@ -106,31 +142,50 @@ export default function AgentDialogue() {
 
     for (const k of seq) {
       if (abortRef.current) break;
+
       setSpeaker(k);
+      setPhase("thinking");
       setStatus(AGENTS[k].name + " is thinking...");
+
+      let text;
       try {
-        const text = await callAPI(k);
-        const msg = { k, t: text };
-        histRef.current = [...histRef.current, msg];
-        setMessages(prev => [...prev, msg]);
-        await new Promise(r => setTimeout(r, 300));
+        text = await callAPI(k);
       } catch (e) {
         setError(e.message);
         break;
       }
+
+      if (abortRef.current) break;
+
+      const msg = { k, t: text };
+      histRef.current = [...histRef.current, msg];
+      setMessages(prev => [...prev, msg]);
+
+      setPhase("speaking");
+      setStatus(AGENTS[k].name + " is speaking...");
+      await synthesizeAndPlay(text, AGENTS[k].voiceId, audioRef);
+
+      if (abortRef.current) break;
+      await new Promise(r => setTimeout(r, 300));
     }
 
     setSpeaker(null);
+    setPhase(null);
     setRunning(false);
     setStatus(abortRef.current ? "" : "Dialogue complete.");
   }
 
   function reset() {
     abortRef.current = true;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     setMessages([]);
     setStatus("");
     setError("");
     setSpeaker(null);
+    setPhase(null);
     setRunning(false);
     histRef.current = [];
     setStanceDisplay({ A: "", B: "" });
@@ -140,6 +195,7 @@ export default function AgentDialogue() {
     const agent = AGENTS[k];
     const isB = k === "B";
     const isActive = speaker === k;
+    const isSpeaking = isActive && phase === "speaking";
     return (
       <div key={k} style={{
         background: "var(--color-background-secondary)",
@@ -149,9 +205,23 @@ export default function AgentDialogue() {
         transition: "border-color 0.3s"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", justifyContent: isB ? "flex-end" : "flex-start" }}>
-          {!isB && <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: agent.color, boxShadow: isActive ? `0 0 8px ${agent.color}` : "none", flexShrink: 0 }} />}
+          {!isB && (
+            <div style={{
+              width: "7px", height: "7px", borderRadius: "50%",
+              background: agent.color,
+              boxShadow: isActive ? `0 0 8px ${agent.color}` : "none",
+              flexShrink: 0
+            }} />
+          )}
           <span style={{ fontSize: "13px", fontWeight: "500", color: agent.color }}>{agent.name}</span>
-          {isB && <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: agent.color, boxShadow: isActive ? `0 0 8px ${agent.color}` : "none", flexShrink: 0 }} />}
+          {isB && (
+            <div style={{
+              width: "7px", height: "7px", borderRadius: "50%",
+              background: agent.color,
+              boxShadow: isActive ? `0 0 8px ${agent.color}` : "none",
+              flexShrink: 0
+            }} />
+          )}
         </div>
         <p style={{ fontSize: "12px", color: "var(--color-text-secondary)", margin: 0, textAlign: isB ? "right" : "left", lineHeight: "1.5" }}>
           {agent.role}
@@ -163,7 +233,7 @@ export default function AgentDialogue() {
         )}
         {isActive && (
           <div style={{ fontSize: "11px", color: agent.color, marginTop: "6px", textAlign: isB ? "right" : "left", opacity: 0.7 }}>
-            thinking...
+            {isSpeaking ? "speaking..." : "thinking..."}
           </div>
         )}
       </div>
@@ -174,7 +244,12 @@ export default function AgentDialogue() {
     <div style={{ fontFamily: "var(--font-mono)", padding: "1.5rem", maxWidth: "740px", margin: "0 auto" }}>
       <div style={{ marginBottom: "1.5rem" }}>
         <div style={{ fontSize: "10px", letterSpacing: "0.25em", color: "var(--color-text-tertiary)", marginBottom: "4px" }}>AGENT DIALOGUE SYSTEM</div>
-        <div style={{ fontSize: "18px", fontWeight: "500", color: "var(--color-text-primary)" }}>Two minds. One question.</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
+          <div style={{ fontSize: "18px", fontWeight: "500", color: "var(--color-text-primary)" }}>Two minds. One question.</div>
+          {voiceEnabled && (
+            <div style={{ fontSize: "10px", letterSpacing: "0.15em", color: "var(--color-text-tertiary)" }}>VOICE ON</div>
+          )}
+        </div>
       </div>
       <div style={{ marginBottom: "1.5rem" }}>
         <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: "var(--color-text-tertiary)", marginBottom: "6px" }}>TOPIC</div>
