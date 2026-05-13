@@ -46,6 +46,12 @@ async function synthesizeAndPlay(text, voiceId, audioRef) {
   const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
   if (!apiKey) return;
 
+  const clean = text
+    .replace(/&/g, "and")
+    .replace(/[*_#~`$]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: "POST",
     headers: {
@@ -53,7 +59,7 @@ async function synthesizeAndPlay(text, voiceId, audioRef) {
       "xi-api-key": apiKey
     },
     body: JSON.stringify({
-      text,
+      text: clean,
       model_id: "eleven_turbo_v2",
       voice_settings: { stability: 0.5, similarity_boost: 0.75 }
     })
