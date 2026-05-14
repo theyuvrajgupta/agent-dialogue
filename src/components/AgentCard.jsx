@@ -6,24 +6,26 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
     <div style={{
       width: "5px", height: "5px", borderRadius: "50%",
       background: agent.color,
-      opacity: isActive ? 1 : 0.55,
-      boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
+      opacity: isActive ? 1 : 0.45,
+      boxShadow: isActive ? `0 0 8px 2px ${agent.color}88` : "none",
       flexShrink: 0,
-      transition: "box-shadow 0.4s, opacity 0.4s",
+      transition: "box-shadow 0.36s var(--ease-out), opacity 0.36s var(--ease-out)",
     }} />
   );
 
   return (
     <div style={{
-      background: "var(--surface)",
-      border: `1px solid ${isActive ? agent.color + "38" : "var(--border)"}`,
+      background: isActive ? `${agent.color}0F` : "var(--surface)",
       borderTop: `2px solid ${isActive ? agent.color : agent.color + "55"}`,
-      borderRadius: "var(--r-md)",
-      padding: "1.125rem 1.25rem",
-      transition: "border-color 0.4s, box-shadow 0.4s",
-      boxShadow: isActive ? `0 0 40px ${agent.color}0F, 0 1px 0 ${agent.color}18 inset` : "none",
+      padding: "1.25rem 1.5rem",
+      transition: "background-color 0.36s var(--ease-out), border-top-color 0.36s var(--ease-out)",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px", justifyContent: isB ? "flex-end" : "flex-start" }}>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: "7px",
+        marginBottom: "5px",
+        justifyContent: isB ? "flex-end" : "flex-start",
+      }}>
         {!isB && dot}
         <span style={{
           fontSize: "14px",
@@ -41,7 +43,7 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
 
       <p style={{
         fontSize: "9px",
-        color: "var(--text-3)",
+        color: "var(--text-2)",
         margin: 0,
         textAlign: isB ? "right" : "left",
         lineHeight: 1.5,
@@ -61,7 +63,7 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
           margin: "10px 0 0",
           textAlign: isB ? "right" : "left",
           lineHeight: 1.65,
-          opacity: 0.65,
+          opacity: 0.62,
         }}>
           {stance}
         </p>
@@ -76,7 +78,7 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
           <div style={{
             width: "4px", height: "4px", borderRadius: "50%",
             background: agent.color,
-            animation: "pulse 1.4s ease-in-out infinite",
+            animation: "pulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
             flexShrink: 0,
           }} />
           <span style={{

@@ -24,6 +24,10 @@
   --r-md:  6px;
   --r-sm:  3px;
 
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
   color-scheme: dark;
   font-family: var(--font-mono);
   background: var(--bg);
@@ -32,14 +36,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Depth gradient */
 body {
   margin: 0;
   background: radial-gradient(ellipse 110% 55% at 50% 0%, #16162A 0%, #0D0D11 58%);
   min-height: 100vh;
 }
 
-/* Grain overlay — static, GPU composited, very cheap */
 body::after {
   content: '';
   position: fixed;
@@ -58,29 +60,45 @@ body::after {
 /* ── Animations ─────────────────────────────────────── */
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.18; }
+  0%, 100% {
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  50% {
+    opacity: 0.15;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+  0%, 100% {
+    opacity: 1;
+    animation-timing-function: steps(1, end);
+  }
+  50% {
+    opacity: 0;
+    animation-timing-function: steps(1, end);
+  }
 }
 
 @keyframes msgIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Applied per message bubble — plays once on mount */
 .msg-enter {
-  animation: msgIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: msgIn 0.3s var(--ease-out) both;
 }
 
-/* Inline cursor during word reveal */
 .cursor {
   display: inline-block;
-  animation: blink 0.72s ease-in-out infinite;
+  animation: blink 0.72s steps(1, end) infinite;
   opacity: 0.5;
   margin-left: 1px;
   font-weight: 300;
@@ -95,12 +113,20 @@ button {
   color: var(--text);
   font-family: var(--font-mono);
   border-radius: var(--r-sm);
-  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  transition:
+    background-color 0.18s var(--ease-out),
+    border-color     0.18s var(--ease-out),
+    color            0.18s var(--ease-out),
+    transform        0.1s  var(--ease-out);
 }
 
 button:hover:not(:disabled) {
   background: var(--surface-hi);
   border-color: var(--text-3);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 button:disabled {
@@ -121,7 +147,7 @@ textarea {
   font-size: 13px;
   line-height: 1.78;
   resize: none;
-  transition: border-color 0.18s;
+  transition: border-color 0.2s var(--ease-out);
 }
 
 textarea:focus {
@@ -130,3 +156,22 @@ textarea:focus {
 }
 
 textarea::placeholder { color: var(--text-3); }
+
+/* ── Reduced motion ──────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .msg-enter {
+    animation: none;
+    opacity: 1;
+  }
+
+  .cursor {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  button,
+  textarea {
+    transition: none;
+  }
+}

@@ -103,6 +103,8 @@ export default function AgentDialogue() {
     setStanceDisplay({ A: "", B: "" });
   }
 
+  const dividerColor = speaker ? AGENTS[speaker].color : "var(--border)";
+
   return (
     <div style={{ fontFamily: "var(--font-mono)", padding: "2.75rem 2rem 5rem", maxWidth: "840px", margin: "0 auto" }}>
 
@@ -133,8 +135,9 @@ export default function AgentDialogue() {
           letterSpacing: "-0.025em",
           fontStyle: "italic",
           fontVariationSettings: '"opsz" 72',
+          textAlign: "center",
         }}>
-          Two minds.<br />One question.
+          Two minds. One question.
         </h1>
         <div style={{
           height: "1px",
@@ -150,9 +153,20 @@ export default function AgentDialogue() {
         <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} />
       </div>
 
-      {/* Agent cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "2rem" }}>
+      {/* Agent cards — unified panel, 1fr 1px 1fr */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1px 1fr",
+        marginBottom: "2rem",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--r-md)",
+        overflow: "hidden",
+      }}>
         <AgentCard agent={AGENTS.A} agentKey="A" isActive={speaker === "A"} phase={phase} stance={stanceDisplay.A} />
+        <div style={{
+          background: dividerColor,
+          transition: "background-color 0.36s var(--ease-out)",
+        }} />
         <AgentCard agent={AGENTS.B} agentKey="B" isActive={speaker === "B"} phase={phase} stance={stanceDisplay.B} />
       </div>
 
@@ -172,7 +186,6 @@ export default function AgentDialogue() {
                 fontWeight: turns === n ? "600" : "400",
                 color: turns === n ? "var(--text)" : "var(--text-3)",
                 letterSpacing: "0.04em",
-                transition: "background 0.18s, color 0.18s",
               }}>
                 {n}
               </button>
@@ -222,10 +235,10 @@ export default function AgentDialogue() {
             color: "var(--text-3)",
             fontSize: "9px",
             padding: "4.5rem 0",
-            letterSpacing: "0.25em",
+            letterSpacing: "0.35em",
             textTransform: "uppercase",
           }}>
-            Ready when you are.
+            Live. In real time.
           </div>
         )}
         {messages.map((msg, i) => {
@@ -244,7 +257,6 @@ export default function AgentDialogue() {
                   marginBottom: "8px",
                   textAlign: isB ? "right" : "left",
                   textTransform: "uppercase",
-                  opacity: 1,
                 }}>
                   {agent.name}
                 </div>
@@ -259,6 +271,10 @@ export default function AgentDialogue() {
                   lineHeight: "1.88",
                   color: "var(--text)",
                   letterSpacing: "0.01em",
+                  boxShadow: isCurrentlySpeaking
+                    ? `0 0 20px 2px ${agent.color}38`
+                    : "0 0 0 0 transparent",
+                  transition: "box-shadow 0.42s var(--ease-out)",
                 }}>
                   {msg.t || " "}
                   {isCurrentlySpeaking && <span className="cursor">|</span>}
@@ -282,7 +298,7 @@ export default function AgentDialogue() {
             <div style={{
               width: "4px", height: "4px", borderRadius: "50%",
               background: "var(--text-3)",
-              animation: "pulse 1.4s ease-in-out infinite",
+              animation: "pulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
               flexShrink: 0,
             }} />
           )}
