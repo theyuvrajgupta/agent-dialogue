@@ -68,7 +68,25 @@ const AGENTS = {
   }
 };
 
-async function synthesizeAndPlay(text, voiceId, audioRef) {
+function parseWordTimestamps(alignment) {
+  const { characters, character_start_times_seconds } = alignment;
+  const words = [];
+  let word = "";
+  let wordStart = null;
+  for (let i = 0; i < characters.length; i++) {
+    const char = characters[i];
+    if (char === " " || char === "\n") {
+      if (word) { words.push({ word, startTime: wordStart }); word = ""; wordStart = null; }
+    } else {
+      if (!word) wordStart = character_start_times_seconds[i];
+      word += char;
+    }
+  }
+  if (word) words.push({ word, startTime: wordStart });
+  return words;
+}
+
+async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
   const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
   if (!apiKey) return;
 
@@ -78,12 +96,9 @@ async function synthesizeAndPlay(text, voiceId, audioRef) {
     .replace(/\s+/g, " ")
     .trim();
 
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": apiKey
-    },
+    headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
     body: JSON.stringify({
       text: clean,
       model_id: "eleven_turbo_v2",
@@ -91,17 +106,51 @@ async function synthesizeAndPlay(text, voiceId, audioRef) {
     })
   });
 
-  if (!res.ok) return; // silent fallback
+  if (!res.ok) { onWordReveal(text); return; }
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+  const data = await res.json();
+  const words = parseWordTimestamps(data.alignment);
+
+  const audioBytes = atob(data.audio_base64);
+  const buf = new Uint8Array(audioBytes.length);
+  for (let i = 0; i < audioBytes.length; i++) buf[i] = audioBytes.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
   const audio = new Audio(url);
   audioRef.current = audio;
 
   await new Promise((resolve) => {
-    audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve(); };
-    audio.onerror = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve(); };
-    audio.play().catch(() => resolve()); // autoplay blocked — resolve silently
+    let rafId;
+    let wordIndex = 0;
+    let resolved = false;
+
+    const done = (showFull) => {
+      if (resolved) return;
+      resolved = true;
+      cancelAnimationFrame(rafId);
+      if (showFull) onWordReveal(clean);
+      URL.revokeObjectURL(url);
+      audioRef.current = null;
+      resolve();
+    };
+
+    const syncWords = () => {
+      const t = audio.currentTime;
+      let changed = false;
+      while (wordIndex < words.length && words[wordIndex].startTime <= t) {
+        wordIndex++;
+        changed = true;
+      }
+      if (changed) {
+        onWordReveal(words.slice(0, wordIndex).map(w => w.word).join(" "));
+      }
+      if (wordIndex < words.length) rafId = requestAnimationFrame(syncWords);
+    };
+
+    audio.onplay = () => { rafId = requestAnimationFrame(syncWords); };
+    audio.onended = () => done(true);
+    audio.onpause = () => done(false);
+    audio.onerror = () => { onWordReveal(text); done(false); };
+    audio.play().catch(() => { onWordReveal(text); done(false); });
   });
 }
 
@@ -222,12 +271,15 @@ export default function AgentDialogue() {
       if (abortRef.current) break;
 
       const msg = { k, t: text };
+      const displayIndex = histRef.current.length;
       histRef.current = [...histRef.current, msg];
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => [...prev, { k, t: voiceEnabled ? "" : text }]);
 
       setPhase("speaking");
       setStatus(AGENTS[k].name + " is speaking...");
-      await synthesizeAndPlay(text, AGENTS[k].voiceId, audioRef);
+      await synthesizeAndPlay(text, AGENTS[k].voiceId, audioRef, (revealed) => {
+        setMessages(prev => prev.map((m, i) => i === displayIndex ? { ...m, t: revealed } : m));
+      });
 
       if (abortRef.current) break;
       await new Promise(r => setTimeout(r, 300));
