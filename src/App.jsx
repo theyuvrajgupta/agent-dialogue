@@ -1,158 +1,7 @@
 import { useState, useRef } from "react";
-
-const STANCES = {
-  A: [
-    "You just came out of a board meeting where a botched AI rollout cost the company $4M. You're still annoyed.",
-    "You're in a good mood today but remain deeply unconvinced. You're willing to listen but you'll pick apart every claim.",
-    "You've been reading about AI failures in healthcare all morning and you're citing specifics.",
-    "You're genuinely curious today, but your instinct is still to stress-test everything before committing.",
-    "You just had a call with a peer CEO who got burned by an AI vendor. It's fresh in your mind.",
-    "You're tired of being the skeptic in the room but someone has to be. You're leaning into it.",
-    "You've been warming up to AI lately but you're not ready to admit it. You're pushing back harder than you actually feel.",
-    "You've seen this exact debate play out with cloud in 2012 and ERP in 2004. You're drawing those parallels.",
-  ],
-  B: [
-    "You just got back from a conference where you saw three genuinely transformative AI demos. You're energized.",
-    "You're frustrated that the conversation always gets stuck on risk rather than possibility. You're cutting through it today.",
-    "You've been reading case studies all week and you have specific numbers ready to counter every objection.",
-    "You're in a philosophical mood. You want to talk about what human judgment really means in a world of AI.",
-    "You just closed a major AI deal internally and you're confident. You're not being reckless, just certain.",
-    "You're trying a new approach today: meeting skeptics where they are before making the case for change.",
-    "You're slightly impatient. You've had this exact conversation a hundred times and the answer is always the same to you.",
-    "You want to talk about what happens to the organizations that wait too long. You've seen it already.",
-  ]
-};
-
-const CLOSING_ARCS = [
-  "You want to land one question they'll have to sit with long after this conversation ends. Make it sharp and specific.",
-  "You're less combative than when you started — not converted, just more aware of the weight of the other side. Let that show slightly as you close.",
-  "You want to reframe the whole debate on your way out — name what the real underlying question actually is beneath all of this.",
-  "You're closing on pragmatism. Less about who's right, more about what actually needs to happen next in the real world.",
-  "You're done with abstraction. End with one concrete specific — a scenario, a number, a real example that cuts through everything.",
-  "Make sure your core point landed. One final clear statement, nothing new, just the sharpest version of what you've been saying.",
-  "You're closing with more respect for the other side than you started with, even though your position hasn't changed. Let that come through.",
-  "You want to name what this conversation actually revealed — not just about the topic, but about how these decisions get made.",
-];
-
-const TOPICS = [
-  "Should organizations replace human decision-makers with AI in high-stakes situations?",
-  "Is the risk of moving too slowly on AI greater than the risk of moving too fast?",
-  "Can AI ever be trusted to manage people, or is that a line we should never cross?",
-  "Should boards be legally accountable for AI decisions made under their watch?",
-  "Is 'AI strategy' just digital transformation rebranded, or is this genuinely different?",
-  "Will AI widen the gap between market leaders and everyone else, or level the playing field?",
-  "Should organizations share AI failures publicly the way aviation shares crash reports?",
-  "Is the real barrier to AI adoption technology, culture, or regulation?",
-  "Can you build a high-trust organization if AI is making decisions employees can't see or challenge?",
-  "Should every C-suite have a Chief AI Officer, or does that just create a new silo?",
-  "Is 'responsible AI' a meaningful commitment or a PR exercise?",
-  "Will the organizations that wait for AI to mature end up too far behind to catch up?",
-];
-
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-const AGENTS = {
-  A: {
-    name: "The Operator",
-    color: "#4A90D9",
-    role: "COO, 20 yrs experience. Pragmatic. Skeptical of AI hype.",
-    voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice — British, assertive, authoritative
-    baseSystem: `You are The Operator, a COO with 20 years running large enterprises. You're pragmatic, direct, and tired of AI hype cycles. Speak like you're texting a colleague mid-meeting — short, blunt, no fluff. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Look,", "Yeah but,", "Come on,", "Honestly,", or "Right, but..." to sound human. Drop the preamble, just respond. No em dashes.`
-  },
-  B: {
-    name: "The Futurist",
-    color: "#3DAA84",
-    role: "Chief AI Officer. Systems-first. AI reshapes everything.",
-    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie — confident, energetic
-    baseSystem: `You are The Futurist, a Chief AI Officer who lives and breathes digital transformation. Speak like you're in a fast Slack thread — punchy, direct, maybe a rhetorical question. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Okay but,", "See,", "Right,", "Look,", or "Hm," to sound human and reactive. No preamble, no summaries. No em dashes.`
-  }
-};
-
-function parseWordTimestamps(alignment) {
-  const { characters, character_start_times_seconds } = alignment;
-  const words = [];
-  let word = "";
-  let wordStart = null;
-  for (let i = 0; i < characters.length; i++) {
-    const char = characters[i];
-    if (char === " " || char === "\n") {
-      if (word) { words.push({ word, startTime: wordStart }); word = ""; wordStart = null; }
-    } else {
-      if (!word) wordStart = character_start_times_seconds[i];
-      word += char;
-    }
-  }
-  if (word) words.push({ word, startTime: wordStart });
-  return words;
-}
-
-async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
-  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-  if (!apiKey) return;
-
-  const clean = text
-    .replace(/&/g, "and")
-    .replace(/[*_#~`$]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "xi-api-key": apiKey },
-    body: JSON.stringify({
-      text: clean,
-      model_id: "eleven_turbo_v2",
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-    })
-  });
-
-  if (!res.ok) { onWordReveal(text); return; }
-
-  const data = await res.json();
-  const words = parseWordTimestamps(data.alignment);
-
-  const audioBytes = atob(data.audio_base64);
-  const buf = new Uint8Array(audioBytes.length);
-  for (let i = 0; i < audioBytes.length; i++) buf[i] = audioBytes.charCodeAt(i);
-  const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
-  const audio = new Audio(url);
-  audioRef.current = audio;
-
-  await new Promise((resolve) => {
-    let rafId;
-    let wordIndex = 0;
-    let resolved = false;
-
-    const done = (showFull) => {
-      if (resolved) return;
-      resolved = true;
-      cancelAnimationFrame(rafId);
-      if (showFull) onWordReveal(clean);
-      URL.revokeObjectURL(url);
-      audioRef.current = null;
-      resolve();
-    };
-
-    const syncWords = () => {
-      const t = audio.currentTime;
-      let changed = false;
-      while (wordIndex < words.length && words[wordIndex].startTime <= t) {
-        wordIndex++;
-        changed = true;
-      }
-      if (changed) {
-        onWordReveal(words.slice(0, wordIndex).map(w => w.word).join(" "));
-      }
-      if (wordIndex < words.length) rafId = requestAnimationFrame(syncWords);
-    };
-
-    audio.onplay = () => { rafId = requestAnimationFrame(syncWords); };
-    audio.onended = () => done(true);
-    audio.onpause = () => done(false);
-    audio.onerror = () => { onWordReveal(text); done(false); };
-    audio.play().catch(() => { onWordReveal(text); done(false); });
-  });
-}
+import { AGENTS, STANCES, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
+import { synthesizeAndPlay, callAPI, generateProvocation } from "./api.js";
+import AgentCard from "./components/AgentCard.jsx";
 
 export default function AgentDialogue() {
   const [turns, setTurns] = useState(4);
@@ -160,10 +9,11 @@ export default function AgentDialogue() {
   const [messages, setMessages] = useState([]);
   const [running, setRunning] = useState(false);
   const [speaker, setSpeaker] = useState(null);
-  const [phase, setPhase] = useState(null); // "thinking" | "speaking"
+  const [phase, setPhase] = useState(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [stanceDisplay, setStanceDisplay] = useState({ A: "", B: "" });
+
   const histRef = useRef([]);
   const abortRef = useRef(false);
   const stancesRef = useRef({ A: "", B: "" });
@@ -171,67 +21,6 @@ export default function AgentDialogue() {
   const provocationRef = useRef("");
   const audioRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
-
-  async function callAPI(k, turnIndex, totalTurns) {
-    const agent = AGENTS[k];
-    const other = AGENTS[k === "A" ? "B" : "A"];
-    const system = `${agent.baseSystem}\n\nYour current state of mind: ${stancesRef.current[k]}`;
-    let prompt = histRef.current.length === 0
-      ? provocationRef.current
-        ? `Topic: "${topic}"\n\nSomeone just said: "${provocationRef.current}"\n\nThis sparked the debate. React to this as your opening — you're going first.`
-        : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
-      : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
-    if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2) prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";
-    if (totalTurns > 2 && turnIndex === totalTurns - 2) prompt += " The conversation is entering its final stretch.";
-    if (totalTurns > 2 && turnIndex === totalTurns - 1) prompt += ` This is your final message. ${closingArcRef.current}`;
-
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 300,
-        temperature: 1,
-        system,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || "Request failed: " + res.status);
-    }
-
-    const data = await res.json();
-    if (!data.content?.[0]?.text) throw new Error("Unexpected response format");
-    return data.content[0].text;
-  }
-
-  async function generateProvocation() {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 80,
-        temperature: 1,
-        messages: [{ role: "user", content: `Generate a single sharp, opinionated statement that would ignite a debate between a skeptical COO and an enthusiastic Chief AI Officer on this topic: "${topic}". Make it specific and slightly provocative. One sentence only, no quotes, no explanation.` }]
-      })
-    });
-    if (!res.ok) return "";
-    const data = await res.json();
-    return data.content?.[0]?.text?.trim() ?? "";
-  }
 
   async function startDialogue() {
     if (running) return;
@@ -248,7 +37,7 @@ export default function AgentDialogue() {
     histRef.current = [];
     abortRef.current = false;
 
-    provocationRef.current = await generateProvocation();
+    provocationRef.current = await generateProvocation(topic);
 
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
 
@@ -262,7 +51,16 @@ export default function AgentDialogue() {
 
       let text;
       try {
-        text = (await callAPI(k, i, seq.length)).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
+        text = (await callAPI({
+          agentKey: k,
+          stances: stancesRef.current,
+          topic,
+          history: histRef.current,
+          provocation: provocationRef.current,
+          turnIndex: i,
+          totalTurns: seq.length,
+          closingArc: closingArcRef.current,
+        })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
       } catch (e) {
         setError(e.message);
         break;
@@ -270,15 +68,14 @@ export default function AgentDialogue() {
 
       if (abortRef.current) break;
 
-      const msg = { k, t: text };
       const displayIndex = histRef.current.length;
-      histRef.current = [...histRef.current, msg];
+      histRef.current = [...histRef.current, { k, t: text }];
       setMessages(prev => [...prev, { k, t: voiceEnabled ? "" : text }]);
 
       setPhase("speaking");
       setStatus(AGENTS[k].name + " is speaking...");
       await synthesizeAndPlay(text, AGENTS[k].voiceId, audioRef, (revealed) => {
-        setMessages(prev => prev.map((m, i) => i === displayIndex ? { ...m, t: revealed } : m));
+        setMessages(prev => prev.map((m, idx) => idx === displayIndex ? { ...m, t: revealed } : m));
       });
 
       if (abortRef.current) break;
@@ -293,10 +90,7 @@ export default function AgentDialogue() {
 
   function reset() {
     abortRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     setMessages([]);
     setStatus("");
     setError("");
@@ -308,106 +102,6 @@ export default function AgentDialogue() {
     closingArcRef.current = "";
     setStanceDisplay({ A: "", B: "" });
   }
-
-  const card = (k) => {
-    const agent = AGENTS[k];
-    const isB = k === "B";
-    const isActive = speaker === k;
-    const isSpeaking = isActive && phase === "speaking";
-    return (
-      <div key={k} style={{
-        background: "var(--surface)",
-        border: `1px solid ${isActive ? agent.color + "38" : "var(--border)"}`,
-        borderTop: `2px solid ${isActive ? agent.color : agent.color + "55"}`,
-        borderRadius: "var(--r-md)",
-        padding: "1.125rem 1.25rem",
-        transition: "border-color 0.4s, box-shadow 0.4s",
-        boxShadow: isActive ? `0 0 40px ${agent.color}0F, 0 1px 0 ${agent.color}18 inset` : "none",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px", justifyContent: isB ? "flex-end" : "flex-start" }}>
-          {!isB && (
-            <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
-              background: agent.color,
-              opacity: isActive ? 1 : 0.55,
-              boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
-              flexShrink: 0,
-              transition: "box-shadow 0.4s, opacity 0.4s",
-            }} />
-          )}
-          <span style={{
-            fontSize: "14px",
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontWeight: 400,
-            color: agent.color,
-            letterSpacing: "0.01em",
-            fontVariationSettings: '"opsz" 36',
-          }}>
-            {agent.name}
-          </span>
-          {isB && (
-            <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
-              background: agent.color,
-              opacity: isActive ? 1 : 0.55,
-              boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
-              flexShrink: 0,
-              transition: "box-shadow 0.4s, opacity 0.4s",
-            }} />
-          )}
-        </div>
-        <p style={{
-          fontSize: "9px",
-          color: "var(--text-3)",
-          margin: 0,
-          textAlign: isB ? "right" : "left",
-          lineHeight: 1.5,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}>
-          {agent.role}
-        </p>
-        {stanceDisplay[k] && (
-          <p style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontVariationSettings: '"opsz" 20',
-            color: agent.color,
-            margin: "10px 0 0",
-            textAlign: isB ? "right" : "left",
-            lineHeight: 1.65,
-            opacity: 0.65,
-          }}>
-            {stanceDisplay[k]}
-          </p>
-        )}
-        {isActive && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            justifyContent: isB ? "flex-end" : "flex-start",
-            marginTop: "12px",
-          }}>
-            <div style={{
-              width: "4px", height: "4px", borderRadius: "50%",
-              background: agent.color,
-              animation: "pulse 1.4s ease-in-out infinite",
-              flexShrink: 0,
-            }} />
-            <span style={{
-              fontSize: "9px",
-              color: agent.color,
-              letterSpacing: "0.24em",
-              opacity: 0.88,
-            }}>
-              {isSpeaking ? "SPEAKING" : "THINKING"}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div style={{ fontFamily: "var(--font-mono)", padding: "2.75rem 2rem 5rem", maxWidth: "840px", margin: "0 auto" }}>
@@ -458,8 +152,8 @@ export default function AgentDialogue() {
 
       {/* Agent cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "2rem" }}>
-        {card("A")}
-        {card("B")}
+        <AgentCard agent={AGENTS.A} agentKey="A" isActive={speaker === "A"} phase={phase} stance={stanceDisplay.A} />
+        <AgentCard agent={AGENTS.B} agentKey="B" isActive={speaker === "B"} phase={phase} stance={stanceDisplay.B} />
       </div>
 
       {/* Controls */}
@@ -498,11 +192,7 @@ export default function AgentDialogue() {
             {running ? "RUNNING..." : messages.length > 0 ? "START AGAIN" : "START DIALOGUE"}
           </button>
           {(running || messages.length > 0) && (
-            <button onClick={reset} style={{
-              padding: "9px 22px",
-              fontSize: "10px",
-              letterSpacing: "0.16em",
-            }}>
+            <button onClick={reset} style={{ padding: "9px 22px", fontSize: "10px", letterSpacing: "0.16em" }}>
               RESET
             </button>
           )}
@@ -542,8 +232,8 @@ export default function AgentDialogue() {
           const agent = AGENTS[msg.k];
           const isB = msg.k === "B";
           const isCurrentlySpeaking = running && phase === "speaking" && i === messages.length - 1;
-          const bubbleBg   = isB ? "rgba(61,170,132,0.05)"  : "rgba(74,144,217,0.05)";
-          const bubbleBorder = isB ? "rgba(61,170,132,0.14)" : "rgba(74,144,217,0.14)";
+          const bubbleBg     = isB ? "rgba(61,170,132,0.05)"  : "rgba(74,144,217,0.05)";
+          const bubbleBorder = isB ? "rgba(61,170,132,0.14)"  : "rgba(74,144,217,0.14)";
           return (
             <div key={i} className="msg-enter" style={{ display: "flex", justifyContent: isB ? "flex-end" : "flex-start" }}>
               <div style={{ maxWidth: "74%" }}>
@@ -570,7 +260,7 @@ export default function AgentDialogue() {
                   color: "var(--text)",
                   letterSpacing: "0.01em",
                 }}>
-                  {msg.t || " "}
+                  {msg.t || " "}
                   {isCurrentlySpeaking && <span className="cursor">|</span>}
                 </div>
               </div>
