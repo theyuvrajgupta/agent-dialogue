@@ -23,6 +23,32 @@ const STANCES = {
   ]
 };
 
+const CLOSING_ARCS = [
+  "You want to land one question they'll have to sit with long after this conversation ends. Make it sharp and specific.",
+  "You're less combative than when you started — not converted, just more aware of the weight of the other side. Let that show slightly as you close.",
+  "You want to reframe the whole debate on your way out — name what the real underlying question actually is beneath all of this.",
+  "You're closing on pragmatism. Less about who's right, more about what actually needs to happen next in the real world.",
+  "You're done with abstraction. End with one concrete specific — a scenario, a number, a real example that cuts through everything.",
+  "Make sure your core point landed. One final clear statement, nothing new, just the sharpest version of what you've been saying.",
+  "You're closing with more respect for the other side than you started with, even though your position hasn't changed. Let that come through.",
+  "You want to name what this conversation actually revealed — not just about the topic, but about how these decisions get made.",
+];
+
+const TOPICS = [
+  "Should organizations replace human decision-makers with AI in high-stakes situations?",
+  "Is the risk of moving too slowly on AI greater than the risk of moving too fast?",
+  "Can AI ever be trusted to manage people, or is that a line we should never cross?",
+  "Should boards be legally accountable for AI decisions made under their watch?",
+  "Is 'AI strategy' just digital transformation rebranded, or is this genuinely different?",
+  "Will AI widen the gap between market leaders and everyone else, or level the playing field?",
+  "Should organizations share AI failures publicly the way aviation shares crash reports?",
+  "Is the real barrier to AI adoption technology, culture, or regulation?",
+  "Can you build a high-trust organization if AI is making decisions employees can't see or challenge?",
+  "Should every C-suite have a Chief AI Officer, or does that just create a new silo?",
+  "Is 'responsible AI' a meaningful commitment or a PR exercise?",
+  "Will the organizations that wait for AI to mature end up too far behind to catch up?",
+];
+
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 const AGENTS = {
@@ -81,7 +107,7 @@ async function synthesizeAndPlay(text, voiceId, audioRef) {
 
 export default function AgentDialogue() {
   const [turns, setTurns] = useState(4);
-  const [topic, setTopic] = useState("Should organizations replace human decision-makers with AI in high-stakes situations?");
+  const [topic, setTopic] = useState(() => pick(TOPICS));
   const [messages, setMessages] = useState([]);
   const [running, setRunning] = useState(false);
   const [speaker, setSpeaker] = useState(null);
@@ -92,6 +118,7 @@ export default function AgentDialogue() {
   const histRef = useRef([]);
   const abortRef = useRef(false);
   const stancesRef = useRef({ A: "", B: "" });
+  const closingArcRef = useRef("");
   const provocationRef = useRef("");
   const audioRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
@@ -106,7 +133,8 @@ export default function AgentDialogue() {
         : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
       : `Topic: "${topic}"\n\nConversation so far:\n${histRef.current.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
     if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2) prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";
-    if (turnIndex === totalTurns - 1) prompt += " This is your final message in this conversation. End naturally in your own voice.";
+    if (totalTurns > 2 && turnIndex === totalTurns - 2) prompt += " The conversation is entering its final stretch.";
+    if (totalTurns > 2 && turnIndex === totalTurns - 1) prompt += ` This is your final message. ${closingArcRef.current}`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -162,6 +190,7 @@ export default function AgentDialogue() {
     const newStances = { A: pick(STANCES.A), B: pick(STANCES.B) };
     stancesRef.current = newStances;
     setStanceDisplay(newStances);
+    closingArcRef.current = pick(CLOSING_ARCS);
 
     setRunning(true);
     setMessages([]);
@@ -224,6 +253,7 @@ export default function AgentDialogue() {
     setRunning(false);
     histRef.current = [];
     provocationRef.current = "";
+    closingArcRef.current = "";
     setStanceDisplay({ A: "", B: "" });
   }
 
