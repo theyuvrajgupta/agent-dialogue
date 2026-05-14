@@ -318,7 +318,7 @@ export default function AgentDialogue() {
       <div key={k} style={{
         background: "var(--surface)",
         border: `1px solid ${isActive ? agent.color + "38" : "var(--border)"}`,
-        borderTop: `2px solid ${isActive ? agent.color : agent.color + "2A"}`,
+        borderTop: `2px solid ${isActive ? agent.color : agent.color + "55"}`,
         borderRadius: "var(--r-md)",
         padding: "1.125rem 1.25rem",
         transition: "border-color 0.4s, box-shadow 0.4s",
@@ -329,7 +329,7 @@ export default function AgentDialogue() {
             <div style={{
               width: "5px", height: "5px", borderRadius: "50%",
               background: agent.color,
-              opacity: isActive ? 1 : 0.35,
+              opacity: isActive ? 1 : 0.55,
               boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
               flexShrink: 0,
               transition: "box-shadow 0.4s, opacity 0.4s",
@@ -350,7 +350,7 @@ export default function AgentDialogue() {
             <div style={{
               width: "5px", height: "5px", borderRadius: "50%",
               background: agent.color,
-              opacity: isActive ? 1 : 0.35,
+              opacity: isActive ? 1 : 0.55,
               boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
               flexShrink: 0,
               transition: "box-shadow 0.4s, opacity 0.4s",
@@ -378,7 +378,7 @@ export default function AgentDialogue() {
             margin: "10px 0 0",
             textAlign: isB ? "right" : "left",
             lineHeight: 1.65,
-            opacity: 0.42,
+            opacity: 0.65,
           }}>
             {stanceDisplay[k]}
           </p>
@@ -554,7 +554,7 @@ export default function AgentDialogue() {
                   marginBottom: "8px",
                   textAlign: isB ? "right" : "left",
                   textTransform: "uppercase",
-                  opacity: 0.82,
+                  opacity: 1,
                 }}>
                   {agent.name}
                 </div>
