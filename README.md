@@ -58,6 +58,6 @@ This saves `operator_test.mp3` and `futurist_test.mp3` in the project root (both
 ## Stack
 
 - React 19 + Vite
-- Anthropic API (`claude-sonnet-4-20250514`)
+- Anthropic API
 - ElevenLabs TTS (optional) — Alice voice for The Operator, Charlie voice for The Futurist
 - No UI library — plain inline styles with CSS custom properties
