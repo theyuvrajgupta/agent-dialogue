@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AGENTS, STANCES, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
 import { synthesizeAndPlay, callAPI, generateProvocation } from "./api.js";
 import AgentCard from "./components/AgentCard.jsx";
@@ -21,6 +21,15 @@ export default function AgentDialogue() {
   const provocationRef = useRef("");
   const audioRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
+
+  const TOPIC_MAX = 280;
+
+  useEffect(() => {
+    return () => {
+      abortRef.current = true;
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    };
+  }, []);
 
   async function startDialogue() {
     if (running) return;
@@ -150,7 +159,23 @@ export default function AgentDialogue() {
         <div style={{ fontSize: "9px", letterSpacing: "0.4em", color: "var(--text-3)", marginBottom: "10px", textTransform: "uppercase" }}>
           Topic
         </div>
-        <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} />
+        <textarea
+          value={topic}
+          onChange={e => setTopic(e.target.value.slice(0, TOPIC_MAX))}
+          disabled={running}
+          rows={2}
+          maxLength={TOPIC_MAX}
+        />
+        <div style={{
+          fontSize: "9px",
+          color: topic.length > TOPIC_MAX * 0.9 ? "var(--danger-text)" : "var(--text-3)",
+          textAlign: "right",
+          marginTop: "5px",
+          letterSpacing: "0.04em",
+          transition: "color 0.2s var(--ease-out)",
+        }}>
+          {topic.length}/{TOPIC_MAX}
+        </div>
       </div>
 
       {/* Agent cards — unified panel, 1fr 1px 1fr */}
