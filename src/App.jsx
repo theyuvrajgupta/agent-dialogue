@@ -262,7 +262,7 @@ export default function AgentDialogue() {
 
       let text;
       try {
-        text = await callAPI(k, i, seq.length);
+        text = (await callAPI(k, i, seq.length)).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
       } catch (e) {
         setError(e.message);
         break;
