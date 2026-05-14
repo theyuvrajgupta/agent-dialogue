@@ -54,14 +54,14 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 const AGENTS = {
   A: {
     name: "The Operator",
-    color: "#185FA5",
+    color: "#4A90D9",
     role: "COO, 20 yrs experience. Pragmatic. Skeptical of AI hype.",
     voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice — British, assertive, authoritative
     baseSystem: `You are The Operator, a COO with 20 years running large enterprises. You're pragmatic, direct, and tired of AI hype cycles. Speak like you're texting a colleague mid-meeting — short, blunt, no fluff. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Look,", "Yeah but,", "Come on,", "Honestly,", or "Right, but..." to sound human. Drop the preamble, just respond. No em dashes.`
   },
   B: {
     name: "The Futurist",
-    color: "#0F6E56",
+    color: "#3DAA84",
     role: "Chief AI Officer. Systems-first. AI reshapes everything.",
     voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie — confident, energetic
     baseSystem: `You are The Futurist, a Chief AI Officer who lives and breathes digital transformation. Speak like you're in a fast Slack thread — punchy, direct, maybe a rhetorical question. 2 to 3 sentences max. Use contractions. Occasionally open with a natural spoken filler like "Okay but,", "See,", "Right,", "Look,", or "Hm," to sound human and reactive. No preamble, no summaries. No em dashes.`
@@ -316,41 +316,70 @@ export default function AgentDialogue() {
     const isSpeaking = isActive && phase === "speaking";
     return (
       <div key={k} style={{
-        background: isActive
-          ? `linear-gradient(135deg, var(--color-background-secondary), ${agent.color}10)`
-          : "var(--color-background-secondary)",
-        border: `0.5px solid ${isActive ? agent.color + "80" : "var(--color-border-tertiary)"}`,
-        borderRadius: "var(--border-radius-lg)",
+        background: "var(--surface)",
+        border: `1px solid ${isActive ? agent.color + "38" : "var(--border)"}`,
+        borderTop: `2px solid ${isActive ? agent.color : agent.color + "2A"}`,
+        borderRadius: "var(--r-md)",
         padding: "1.125rem 1.25rem",
-        transition: "border-color 0.3s, background 0.3s, box-shadow 0.3s",
-        boxShadow: isActive ? `0 0 28px ${agent.color}18` : "none",
+        transition: "border-color 0.4s, box-shadow 0.4s",
+        boxShadow: isActive ? `0 0 40px ${agent.color}0F, 0 1px 0 ${agent.color}18 inset` : "none",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", justifyContent: isB ? "flex-end" : "flex-start" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px", justifyContent: isB ? "flex-end" : "flex-start" }}>
           {!isB && (
             <div style={{
-              width: "6px", height: "6px", borderRadius: "50%",
+              width: "5px", height: "5px", borderRadius: "50%",
               background: agent.color,
-              boxShadow: isActive ? `0 0 10px ${agent.color}` : "none",
+              opacity: isActive ? 1 : 0.35,
+              boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
               flexShrink: 0,
-              transition: "box-shadow 0.3s",
+              transition: "box-shadow 0.4s, opacity 0.4s",
             }} />
           )}
-          <span style={{ fontSize: "12px", fontWeight: "600", color: agent.color, letterSpacing: "0.05em" }}>{agent.name}</span>
+          <span style={{
+            fontSize: "14px",
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontWeight: 400,
+            color: agent.color,
+            letterSpacing: "0.01em",
+            fontVariationSettings: '"opsz" 36',
+          }}>
+            {agent.name}
+          </span>
           {isB && (
             <div style={{
-              width: "6px", height: "6px", borderRadius: "50%",
+              width: "5px", height: "5px", borderRadius: "50%",
               background: agent.color,
-              boxShadow: isActive ? `0 0 10px ${agent.color}` : "none",
+              opacity: isActive ? 1 : 0.35,
+              boxShadow: isActive ? `0 0 7px ${agent.color}` : "none",
               flexShrink: 0,
-              transition: "box-shadow 0.3s",
+              transition: "box-shadow 0.4s, opacity 0.4s",
             }} />
           )}
         </div>
-        <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", margin: 0, textAlign: isB ? "right" : "left", lineHeight: "1.5" }}>
+        <p style={{
+          fontSize: "9px",
+          color: "var(--text-3)",
+          margin: 0,
+          textAlign: isB ? "right" : "left",
+          lineHeight: 1.5,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+        }}>
           {agent.role}
         </p>
         {stanceDisplay[k] && (
-          <p style={{ fontSize: "11px", color: agent.color, margin: "8px 0 0", textAlign: isB ? "right" : "left", lineHeight: "1.5", opacity: 0.65, fontStyle: "italic" }}>
+          <p style={{
+            fontSize: "11px",
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontVariationSettings: '"opsz" 20',
+            color: agent.color,
+            margin: "10px 0 0",
+            textAlign: isB ? "right" : "left",
+            lineHeight: 1.65,
+            opacity: 0.42,
+          }}>
             {stanceDisplay[k]}
           </p>
         )}
@@ -358,14 +387,20 @@ export default function AgentDialogue() {
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
             justifyContent: isB ? "flex-end" : "flex-start",
-            marginTop: "10px",
+            marginTop: "12px",
           }}>
             <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
+              width: "4px", height: "4px", borderRadius: "50%",
               background: agent.color,
-              animation: "pulse 1.2s ease-in-out infinite",
+              animation: "pulse 1.4s ease-in-out infinite",
+              flexShrink: 0,
             }} />
-            <span style={{ fontSize: "10px", color: agent.color, letterSpacing: "0.1em", opacity: 0.8 }}>
+            <span style={{
+              fontSize: "9px",
+              color: agent.color,
+              letterSpacing: "0.24em",
+              opacity: 0.88,
+            }}>
               {isSpeaking ? "SPEAKING" : "THINKING"}
             </span>
           </div>
@@ -375,89 +410,99 @@ export default function AgentDialogue() {
   };
 
   return (
-    <div style={{ fontFamily: "var(--font-mono)", padding: "2rem 1.5rem", maxWidth: "760px", margin: "0 auto" }}>
+    <div style={{ fontFamily: "var(--font-mono)", padding: "2.75rem 2rem 5rem", maxWidth: "840px", margin: "0 auto" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-          <div style={{ fontSize: "9px", letterSpacing: "0.35em", color: "var(--color-text-tertiary)", textTransform: "uppercase" }}>
+      <div style={{ marginBottom: "2.75rem" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+          <span style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", textTransform: "uppercase" }}>
             Agent Dialogue System
-          </div>
+          </span>
           {voiceEnabled && (
-            <div style={{
-              fontSize: "9px", letterSpacing: "0.2em", color: "var(--color-text-tertiary)",
-              padding: "3px 8px",
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderRadius: "var(--border-radius-sm)",
+            <span style={{
+              fontSize: "9px", letterSpacing: "0.25em", color: "var(--text-3)",
+              padding: "3px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--r-sm)",
             }}>
               VOICE
-            </div>
+            </span>
           )}
         </div>
-        <div style={{ fontSize: "22px", fontWeight: "600", color: "var(--color-text-primary)", letterSpacing: "-0.02em", marginBottom: "1.25rem" }}>
-          Two minds. One question.
-        </div>
-        <div style={{ height: "0.5px", background: "var(--color-border-tertiary)" }} />
+        <h1 style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 300,
+          fontSize: "clamp(30px, 5vw, 46px)",
+          color: "var(--text)",
+          margin: "0 0 1.75rem",
+          lineHeight: 1.06,
+          letterSpacing: "-0.025em",
+          fontStyle: "italic",
+          fontVariationSettings: '"opsz" 72',
+        }}>
+          Two minds.<br />One question.
+        </h1>
+        <div style={{
+          height: "1px",
+          background: "linear-gradient(90deg, #6B5010 0%, #252534 32%, transparent 100%)",
+        }} />
       </div>
 
       {/* Topic */}
-      <div style={{ marginBottom: "1.25rem" }}>
-        <div style={{ fontSize: "9px", letterSpacing: "0.25em", color: "var(--color-text-tertiary)", marginBottom: "8px", textTransform: "uppercase" }}>Topic</div>
-        <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} style={{ resize: "none" }} />
+      <div style={{ marginBottom: "1.75rem" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.4em", color: "var(--text-3)", marginBottom: "10px", textTransform: "uppercase" }}>
+          Topic
+        </div>
+        <textarea value={topic} onChange={e => setTopic(e.target.value)} disabled={running} rows={2} />
       </div>
 
       {/* Agent cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "1.75rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "2rem" }}>
         {card("A")}
         {card("B")}
       </div>
 
-      {/* Turns + controls */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.75rem", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-tertiary)", letterSpacing: "0.1em" }}>TURNS</span>
-          <div style={{ display: "flex", border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", overflow: "hidden" }}>
+      {/* Controls */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2.25rem", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.38em", textTransform: "uppercase" }}>Turns</span>
+          <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", overflow: "hidden", background: "var(--surface)" }}>
             {[2, 4, 6].map(n => (
-              <button
-                key={n}
-                onClick={() => setTurns(n)}
-                disabled={running}
-                style={{
-                  padding: "5px 16px",
-                  fontSize: "12px",
-                  border: "none",
-                  borderRight: n !== 6 ? "0.5px solid var(--color-border-tertiary)" : "none",
-                  borderRadius: 0,
-                  background: turns === n ? "var(--color-background-tertiary)" : "transparent",
-                  fontWeight: turns === n ? "600" : "400",
-                  color: turns === n ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                }}
-              >
+              <button key={n} onClick={() => setTurns(n)} disabled={running} style={{
+                padding: "6px 20px",
+                fontSize: "12px",
+                border: "none",
+                borderRight: n !== 6 ? "1px solid var(--border)" : "none",
+                borderRadius: 0,
+                background: turns === n ? "var(--surface-hi)" : "transparent",
+                fontWeight: turns === n ? "600" : "400",
+                color: turns === n ? "var(--text)" : "var(--text-3)",
+                letterSpacing: "0.04em",
+                transition: "background 0.18s, color 0.18s",
+              }}>
                 {n}
               </button>
             ))}
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            onClick={startDialogue}
-            disabled={running}
-            style={{
-              padding: "8px 28px",
-              fontSize: "11px",
-              letterSpacing: "0.12em",
-              background: running ? "transparent" : "var(--color-background-tertiary)",
-              borderColor: running ? "var(--color-border-tertiary)" : "var(--color-text-tertiary)",
-              fontWeight: "500",
-            }}
-          >
+          <button onClick={startDialogue} disabled={running} style={{
+            padding: "9px 36px",
+            fontSize: "10px",
+            letterSpacing: "0.22em",
+            background: running ? "transparent" : "var(--surface-hi)",
+            borderColor: running ? "var(--border)" : "var(--text-3)",
+            color: running ? "var(--text-3)" : "var(--text)",
+            fontWeight: "500",
+          }}>
             {running ? "RUNNING..." : messages.length > 0 ? "START AGAIN" : "START DIALOGUE"}
           </button>
           {(running || messages.length > 0) && (
-            <button
-              onClick={reset}
-              style={{ padding: "8px 20px", fontSize: "11px", letterSpacing: "0.1em" }}
-            >
+            <button onClick={reset} style={{
+              padding: "9px 22px",
+              fontSize: "10px",
+              letterSpacing: "0.16em",
+            }}>
               RESET
             </button>
           )}
@@ -467,66 +512,66 @@ export default function AgentDialogue() {
       {/* Error */}
       {error && (
         <div style={{
-          padding: "10px 14px",
-          background: "var(--color-background-danger)",
-          border: "0.5px solid var(--color-border-danger)",
-          borderRadius: "var(--border-radius-md)",
+          padding: "12px 16px",
+          background: "var(--danger-bg)",
+          border: "1px solid var(--danger-border)",
+          borderRadius: "var(--r-md)",
           fontSize: "12px",
-          color: "var(--color-text-danger)",
-          marginBottom: "1.25rem",
+          color: "var(--danger-text)",
+          marginBottom: "1.5rem",
         }}>
           {error}
         </div>
       )}
 
       {/* Dialogue */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
         {messages.length === 0 && !running && (
           <div style={{
             textAlign: "center",
-            color: "var(--color-text-tertiary)",
-            fontSize: "12px",
-            padding: "3rem 0",
-            letterSpacing: "0.05em",
+            color: "var(--text-3)",
+            fontSize: "9px",
+            padding: "4.5rem 0",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
           }}>
-            Set your topic and start the dialogue.
+            Ready when you are.
           </div>
         )}
         {messages.map((msg, i) => {
           const agent = AGENTS[msg.k];
           const isB = msg.k === "B";
-          const bubbleBg = isB
-            ? `rgba(15, 110, 86, 0.08)`
-            : `rgba(24, 95, 165, 0.08)`;
-          const bubbleBorder = isB
-            ? `rgba(15, 110, 86, 0.22)`
-            : `rgba(24, 95, 165, 0.22)`;
-          const bubbleRadius = isB ? "14px 3px 14px 14px" : "3px 14px 14px 14px";
+          const isCurrentlySpeaking = running && phase === "speaking" && i === messages.length - 1;
+          const bubbleBg   = isB ? "rgba(61,170,132,0.05)"  : "rgba(74,144,217,0.05)";
+          const bubbleBorder = isB ? "rgba(61,170,132,0.14)" : "rgba(74,144,217,0.14)";
           return (
-            <div key={i} style={{ display: "flex", justifyContent: isB ? "flex-end" : "flex-start" }}>
-              <div style={{ maxWidth: "72%" }}>
+            <div key={i} className="msg-enter" style={{ display: "flex", justifyContent: isB ? "flex-end" : "flex-start" }}>
+              <div style={{ maxWidth: "74%" }}>
                 <div style={{
-                  fontSize: "10px",
+                  fontSize: "9px",
                   color: agent.color,
-                  letterSpacing: "0.12em",
-                  marginBottom: "6px",
+                  letterSpacing: "0.24em",
+                  marginBottom: "8px",
                   textAlign: isB ? "right" : "left",
-                  fontWeight: "600",
+                  textTransform: "uppercase",
+                  opacity: 0.82,
                 }}>
                   {agent.name}
                 </div>
                 <div style={{
                   background: bubbleBg,
-                  border: `0.5px solid ${bubbleBorder}`,
-                  borderLeft: !isB ? `2px solid ${agent.color}` : `0.5px solid ${bubbleBorder}`,
-                  borderRight: isB ? `2px solid ${agent.color}` : `0.5px solid ${bubbleBorder}`,
-                  borderRadius: bubbleRadius,
-                  padding: "14px 18px",
+                  border: `1px solid ${bubbleBorder}`,
+                  borderLeft:  !isB ? `2px solid ${agent.color}` : `1px solid ${bubbleBorder}`,
+                  borderRight:  isB ? `2px solid ${agent.color}` : `1px solid ${bubbleBorder}`,
+                  borderRadius: isB ? "10px 2px 10px 10px" : "2px 10px 10px 10px",
+                  padding: "16px 20px",
                   fontSize: "13px",
-                  lineHeight: "1.75",
-                  color: "var(--color-text-primary)",
+                  lineHeight: "1.88",
+                  color: "var(--text)",
+                  letterSpacing: "0.01em",
                 }}>
-                  {msg.t}
+                  {msg.t || " "}
+                  {isCurrentlySpeaking && <span className="cursor">|</span>}
                 </div>
               </div>
             </div>
@@ -538,15 +583,16 @@ export default function AgentDialogue() {
       {status && (
         <div style={{
           display: "flex", alignItems: "center", gap: "8px",
-          fontSize: "11px", color: "var(--color-text-tertiary)",
-          marginTop: "1.5rem",
-          letterSpacing: "0.05em",
+          fontSize: "9px", color: "var(--text-3)",
+          marginTop: "1.75rem",
+          letterSpacing: "0.22em",
+          textTransform: "uppercase",
         }}>
           {running && (
             <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
-              background: "var(--color-text-tertiary)",
-              animation: "pulse 1.2s ease-in-out infinite",
+              width: "4px", height: "4px", borderRadius: "50%",
+              background: "var(--text-3)",
+              animation: "pulse 1.4s ease-in-out infinite",
               flexShrink: 0,
             }} />
           )}

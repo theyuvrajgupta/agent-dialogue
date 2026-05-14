@@ -1,86 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200..700;1,9..144,200..700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 :root {
-  --font-mono: ui-monospace, Consolas, "Cascadia Code", monospace;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, Consolas, monospace;
 
-  --color-background-primary:   #0b0b0f;
-  --color-background-secondary: #111117;
-  --color-background-tertiary:  #1a1a22;
-  --color-background-danger:    #1a0808;
+  --bg:         #0D0D11;
+  --surface:    #121219;
+  --surface-hi: #181820;
 
-  --color-border-primary:  #18181f;
-  --color-border-tertiary: #22222c;
-  --color-border-danger:   #4a1010;
+  --border:     #1E1E2B;
 
-  --color-text-primary:   #ecedf1;
-  --color-text-secondary: #8c8c9a;
-  --color-text-tertiary:  #686878;
-  --color-text-danger:    #ff6b6b;
+  --text:   #ECEDF3;
+  --text-2: #86869A;
+  --text-3: #4E4E62;
 
-  --border-radius-lg: 12px;
-  --border-radius-md: 6px;
-  --border-radius-sm: 4px;
+  --gold: #6B5010;
+
+  --danger-bg:     #1A0808;
+  --danger-border: #4A1010;
+  --danger-text:   #FF6B6B;
+
+  --r-lg: 10px;
+  --r-md:  6px;
+  --r-sm:  3px;
 
   color-scheme: dark;
   font-family: var(--font-mono);
-  background: var(--color-background-primary);
-  color: var(--color-text-primary);
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.35; }
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
+/* Depth gradient */
 body {
   margin: 0;
+  background: radial-gradient(ellipse 110% 55% at 50% 0%, #16162A 0%, #0D0D11 58%);
+  min-height: 100vh;
 }
 
-#root {
-  min-height: 100svh;
+/* Grain overlay — static, GPU composited, very cheap */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 250px 250px;
+  opacity: 0.026;
+  pointer-events: none;
+  z-index: 9999;
 }
+
+#root { min-height: 100svh; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Animations ─────────────────────────────────────── */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.18; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Applied per message bubble — plays once on mount */
+.msg-enter {
+  animation: msgIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Inline cursor during word reveal */
+.cursor {
+  display: inline-block;
+  animation: blink 0.72s ease-in-out infinite;
+  opacity: 0.5;
+  margin-left: 1px;
+  font-weight: 300;
+}
+
+/* ── Global elements ─────────────────────────────────── */
 
 button {
   cursor: pointer;
-  border: 0.5px solid var(--color-border-tertiary);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--color-text-primary);
+  color: var(--text);
   font-family: var(--font-mono);
-  border-radius: var(--border-radius-md);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  border-radius: var(--r-sm);
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
 }
 
 button:hover:not(:disabled) {
-  background: var(--color-background-tertiary);
-  border-color: var(--color-text-tertiary);
+  background: var(--surface-hi);
+  border-color: var(--text-3);
 }
 
 button:disabled {
-  opacity: 0.35;
+  opacity: 0.26;
   cursor: not-allowed;
 }
 
-textarea, input[type="text"], input:not([type]) {
-  background: var(--color-background-secondary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-md);
-  color: var(--color-text-primary);
-  padding: 10px 12px;
+button:focus { outline: none; }
+
+textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 12px 14px;
   width: 100%;
   font-family: var(--font-mono);
   font-size: 13px;
-  transition: border-color 0.15s;
+  line-height: 1.78;
+  resize: none;
+  transition: border-color 0.18s;
 }
 
-textarea:focus, input:focus, button:focus {
+textarea:focus {
   outline: none;
-  border-color: var(--color-text-tertiary);
+  border-color: var(--text-3);
 }
 
-textarea::placeholder, input::placeholder {
-  color: var(--color-text-tertiary);
-}
+textarea::placeholder { color: var(--text-3); }
