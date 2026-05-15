@@ -112,8 +112,6 @@ export default function AgentDialogue() {
     setStanceDisplay({ A: "", B: "" });
   }
 
-  const dividerColor = speaker ? AGENTS[speaker].color : "var(--border)";
-
   return (
     <div style={{ fontFamily: "var(--font-mono)", padding: "4rem 2.5rem 7rem", maxWidth: "880px", margin: "0 auto" }}>
 
@@ -198,8 +196,9 @@ export default function AgentDialogue() {
       }}>
         <AgentCard agent={AGENTS.A} agentKey="A" isActive={speaker === "A"} phase={phase} stance={stanceDisplay.A} />
         <div style={{
-          background: dividerColor,
-          transition: "background-color 0.4s var(--ease-out)",
+          background: "rgba(255, 255, 255, 0.22)",
+          boxShadow: speaker ? `0 0 14px 5px ${AGENTS[speaker].color}66` : "none",
+          transition: "box-shadow 0.4s var(--ease-out)",
         }} />
         <AgentCard agent={AGENTS.B} agentKey="B" isActive={speaker === "B"} phase={phase} stance={stanceDisplay.B} />
       </div>
@@ -207,19 +206,29 @@ export default function AgentDialogue() {
       {/* Controls */}
       <div className="fade-up fade-up-6" style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: "2.75rem", flexWrap: "wrap", gap: "12px",
+        marginBottom: "1.75rem", flexWrap: "wrap", gap: "12px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.42em", textTransform: "uppercase" }}>Turns</span>
-          <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", overflow: "hidden", background: "var(--surface)" }}>
+          <div style={{
+            display: "flex",
+            border: "1px solid rgba(255, 255, 255, 0.13)",
+            borderRadius: "var(--r-sm)",
+            overflow: "hidden",
+            background: "rgba(255, 255, 255, 0.06)",
+            boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.16)",
+          }}>
             {[2, 4, 6].map(n => (
               <button key={n} onClick={() => setTurns(n)} disabled={running} style={{
                 padding: "7px 22px",
                 fontSize: "12px",
                 border: "none",
-                borderRight: n !== 6 ? "1px solid var(--border)" : "none",
+                backdropFilter: "none",
+                WebkitBackdropFilter: "none",
+                borderRight: n !== 6 ? "1px solid rgba(255, 255, 255, 0.11)" : "none",
                 borderRadius: 0,
-                background: turns === n ? "var(--surface-hi)" : "transparent",
+                background: turns === n ? "rgba(255, 255, 255, 0.14)" : "transparent",
+                boxShadow: turns === n ? "inset 0 1px 0 rgba(255,255,255,0.20)" : "none",
                 fontWeight: turns === n ? "600" : "400",
                 color: turns === n ? "var(--text)" : "var(--text-3)",
                 letterSpacing: "0.04em",
@@ -234,8 +243,11 @@ export default function AgentDialogue() {
             padding: "10px 40px",
             fontSize: "10px",
             letterSpacing: "0.24em",
-            background: running ? "transparent" : "var(--surface-hi)",
-            borderColor: running ? "var(--border)" : "var(--text-3)",
+            background: running ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.11)",
+            borderColor: running ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.26)",
+            boxShadow: running
+              ? "inset 0 1px 0 rgba(255,255,255,0.08)"
+              : "inset 0 1px 0 rgba(255,255,255,0.26), 0 4px 24px rgba(0,0,0,0.32)",
             color: running ? "var(--text-3)" : "var(--text)",
             fontWeight: "500",
           }}>
@@ -248,6 +260,13 @@ export default function AgentDialogue() {
           )}
         </div>
       </div>
+
+      {/* Chat area divider */}
+      <div style={{
+        height: "1px",
+        background: "linear-gradient(90deg, transparent 0%, rgba(74,144,217,0.45) 22%, rgba(255,255,255,0.16) 50%, rgba(61,170,132,0.45) 78%, transparent 100%)",
+        marginBottom: "2.5rem",
+      }} />
 
       {/* Error */}
       {error && (
