@@ -25,6 +25,7 @@ export async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
   const clean = text
     .replace(/&/g, "and")
     .replace(/[*_#~`]/g, "")
+    .replace(/\b(\d+)s\b/g, "$1's")
     .replace(/\s+/g, " ")
     .trim();
 

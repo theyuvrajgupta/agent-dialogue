@@ -22,13 +22,16 @@ export default function AgentDialogue() {
   const audioRef = useRef(null);
   const prefetchControllerRef = useRef(null);
   const bottomRef = useRef(null);
+  const prevMsgCountRef = useRef(0);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
   const TOPIC_MAX = 280;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length]);
+    const isNew = messages.length !== prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+    bottomRef.current?.scrollIntoView({ behavior: isNew ? "smooth" : "instant", block: "end" });
+  }, [messages]);
 
   useEffect(() => {
     return () => {
