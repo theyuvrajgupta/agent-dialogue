@@ -30,7 +30,7 @@ Dark glassmorphism UI with no external component library — plain React with in
 ## Stack
 
 - React 19 + Vite (no UI library)
-- Anthropic API — `claude-sonnet-4-20250514`, `max_tokens: 300`, `temperature: 1`; called directly from the browser with `anthropic-dangerous-direct-browser-access: true`
+- Anthropic API — `claude`, `max_tokens: 300`, `temperature: 1`; called directly from the browser with `anthropic-dangerous-direct-browser-access: true`
 - ElevenLabs TTS (optional) — Alice voice for The Operator, Charlie voice for The Futurist
 - Deployed on Vercel
 
