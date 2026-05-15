@@ -209,7 +209,7 @@ export default function AgentDialogue() {
       {/* Topic */}
       <div className="fade-up fade-up-4" style={{ marginBottom: "2.25rem" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-          <div style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", textTransform: "uppercase" }}>
+          <div style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-2)", textTransform: "uppercase" }}>
             Topic
           </div>
           <button
@@ -221,7 +221,7 @@ export default function AgentDialogue() {
               padding: "4px 10px",
               fontSize: "9px",
               letterSpacing: "0.25em",
-              color: "var(--text-3)",
+              color: "var(--text-2)",
             }}
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -280,7 +280,7 @@ export default function AgentDialogue() {
         marginBottom: "1.75rem", flexWrap: "wrap", gap: "12px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.42em", textTransform: "uppercase" }}>Turns</span>
+          <span style={{ fontSize: "9px", color: "var(--text-2)", letterSpacing: "0.42em", textTransform: "uppercase" }}>Turns</span>
           <div style={{
             display: "flex",
             border: "1px solid rgba(255, 255, 255, 0.13)",
@@ -301,7 +301,7 @@ export default function AgentDialogue() {
                 background: turns === n ? "rgba(255, 255, 255, 0.14)" : "transparent",
                 boxShadow: turns === n ? "inset 0 1px 0 rgba(255,255,255,0.20)" : "none",
                 fontWeight: turns === n ? "600" : "400",
-                color: turns === n ? "var(--text)" : "var(--text-3)",
+                color: turns === n ? "var(--text)" : "var(--text-2)",
                 letterSpacing: "0.04em",
               }}>
                 {n}
@@ -359,7 +359,7 @@ export default function AgentDialogue() {
         {messages.length === 0 && !running && (
           <div style={{
             textAlign: "center",
-            color: "var(--text-3)",
+            color: "var(--text-2)",
             fontSize: "10px",
             padding: "5.5rem 0",
             letterSpacing: "0.4em",
