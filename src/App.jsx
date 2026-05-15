@@ -115,12 +115,15 @@ export default function AgentDialogue() {
   const dividerColor = speaker ? AGENTS[speaker].color : "var(--border)";
 
   return (
-    <div style={{ fontFamily: "var(--font-mono)", padding: "2.75rem 2rem 5rem", maxWidth: "840px", margin: "0 auto" }}>
+    <div style={{ fontFamily: "var(--font-mono)", padding: "4rem 2.5rem 7rem", maxWidth: "880px", margin: "0 auto" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: "2.75rem" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.5rem" }}>
-          <span style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", textTransform: "uppercase" }}>
+      <div style={{ marginBottom: "3.5rem" }}>
+        <div className="fade-up fade-up-1" style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+          marginBottom: "2.25rem",
+        }}>
+          <span style={{ fontSize: "9px", letterSpacing: "0.5em", color: "var(--text-3)", textTransform: "uppercase" }}>
             Agent Dialogue System
           </span>
           {voiceEnabled && (
@@ -134,29 +137,31 @@ export default function AgentDialogue() {
             </span>
           )}
         </div>
-        <h1 style={{
+
+        <h1 className="fade-up fade-up-2" style={{
           fontFamily: "var(--font-display)",
           fontWeight: 300,
-          fontSize: "clamp(30px, 5vw, 46px)",
+          fontSize: "clamp(40px, 6.5vw, 64px)",
           color: "var(--text)",
-          margin: "0 0 1.75rem",
-          lineHeight: 1.06,
-          letterSpacing: "-0.025em",
+          margin: "0 0 2.75rem",
+          lineHeight: 1.02,
+          letterSpacing: "-0.03em",
           fontStyle: "italic",
           fontVariationSettings: '"opsz" 72',
           textAlign: "center",
         }}>
           Two minds. One question.
         </h1>
-        <div style={{
+
+        <div className="fade-up fade-up-3" style={{
           height: "1px",
-          background: "linear-gradient(90deg, #6B5010 0%, #252534 32%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent 0%, #6B5010 20%, #3A3A5C 55%, transparent 100%)",
         }} />
       </div>
 
       {/* Topic */}
-      <div style={{ marginBottom: "1.75rem" }}>
-        <div style={{ fontSize: "9px", letterSpacing: "0.4em", color: "var(--text-3)", marginBottom: "10px", textTransform: "uppercase" }}>
+      <div className="fade-up fade-up-4" style={{ marginBottom: "2.25rem" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", marginBottom: "10px", textTransform: "uppercase" }}>
           Topic
         </div>
         <textarea
@@ -179,30 +184,37 @@ export default function AgentDialogue() {
       </div>
 
       {/* Agent cards — unified panel, 1fr 1px 1fr */}
-      <div style={{
+      <div className="fade-up fade-up-5" style={{
         display: "grid",
         gridTemplateColumns: "1fr 1px 1fr",
-        marginBottom: "2rem",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--r-md)",
+        marginBottom: "2.25rem",
+        background: "rgba(255, 255, 255, 0.08)",
+        backdropFilter: "blur(20px) saturate(160%)",
+        WebkitBackdropFilter: "blur(20px) saturate(160%)",
+        border: "1px solid rgba(255, 255, 255, 0.18)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.26), 0 24px 80px rgba(0,0,0,0.5)",
+        borderRadius: "var(--r-lg)",
         overflow: "hidden",
       }}>
         <AgentCard agent={AGENTS.A} agentKey="A" isActive={speaker === "A"} phase={phase} stance={stanceDisplay.A} />
         <div style={{
           background: dividerColor,
-          transition: "background-color 0.36s var(--ease-out)",
+          transition: "background-color 0.4s var(--ease-out)",
         }} />
         <AgentCard agent={AGENTS.B} agentKey="B" isActive={speaker === "B"} phase={phase} stance={stanceDisplay.B} />
       </div>
 
       {/* Controls */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2.25rem", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.38em", textTransform: "uppercase" }}>Turns</span>
+      <div className="fade-up fade-up-6" style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: "2.75rem", flexWrap: "wrap", gap: "12px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.42em", textTransform: "uppercase" }}>Turns</span>
           <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", overflow: "hidden", background: "var(--surface)" }}>
             {[2, 4, 6].map(n => (
               <button key={n} onClick={() => setTurns(n)} disabled={running} style={{
-                padding: "6px 20px",
+                padding: "7px 22px",
                 fontSize: "12px",
                 border: "none",
                 borderRight: n !== 6 ? "1px solid var(--border)" : "none",
@@ -219,19 +231,19 @@ export default function AgentDialogue() {
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           <button onClick={startDialogue} disabled={running} style={{
-            padding: "9px 36px",
+            padding: "10px 40px",
             fontSize: "10px",
-            letterSpacing: "0.22em",
+            letterSpacing: "0.24em",
             background: running ? "transparent" : "var(--surface-hi)",
             borderColor: running ? "var(--border)" : "var(--text-3)",
             color: running ? "var(--text-3)" : "var(--text)",
             fontWeight: "500",
           }}>
-            {running ? "RUNNING..." : messages.length > 0 ? "START AGAIN" : "START DIALOGUE"}
+            {running ? "Running..." : messages.length > 0 ? "Start Again" : "Start Dialogue"}
           </button>
           {(running || messages.length > 0) && (
-            <button onClick={reset} style={{ padding: "9px 22px", fontSize: "10px", letterSpacing: "0.16em" }}>
-              RESET
+            <button onClick={reset} style={{ padding: "10px 24px", fontSize: "10px", letterSpacing: "0.18em" }}>
+              Reset
             </button>
           )}
         </div>
@@ -240,28 +252,29 @@ export default function AgentDialogue() {
       {/* Error */}
       {error && (
         <div style={{
-          padding: "12px 16px",
+          padding: "14px 18px",
           background: "var(--danger-bg)",
           border: "1px solid var(--danger-border)",
           borderRadius: "var(--r-md)",
           fontSize: "12px",
           color: "var(--danger-text)",
-          marginBottom: "1.5rem",
+          marginBottom: "2rem",
         }}>
           {error}
         </div>
       )}
 
       {/* Dialogue */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
         {messages.length === 0 && !running && (
           <div style={{
             textAlign: "center",
             color: "var(--text-3)",
-            fontSize: "9px",
-            padding: "4.5rem 0",
-            letterSpacing: "0.35em",
+            fontSize: "10px",
+            padding: "5.5rem 0",
+            letterSpacing: "0.4em",
             textTransform: "uppercase",
+            opacity: 0.8,
           }}>
             Live. In real time.
           </div>
@@ -270,36 +283,39 @@ export default function AgentDialogue() {
           const agent = AGENTS[msg.k];
           const isB = msg.k === "B";
           const isCurrentlySpeaking = running && phase === "speaking" && i === messages.length - 1;
-          const bubbleBg     = isB ? "rgba(61,170,132,0.05)"  : "rgba(74,144,217,0.05)";
-          const bubbleBorder = isB ? "rgba(61,170,132,0.14)"  : "rgba(74,144,217,0.14)";
+          const bubbleBg     = isB ? "rgba(61,170,132,0.10)"  : "rgba(74,144,217,0.10)";
+          const bubbleBorder = isB ? "rgba(61,170,132,0.28)"  : "rgba(74,144,217,0.28)";
           return (
             <div key={i} className="msg-enter" style={{ display: "flex", justifyContent: isB ? "flex-end" : "flex-start" }}>
-              <div style={{ maxWidth: "74%" }}>
+              <div style={{ maxWidth: "76%" }}>
                 <div style={{
                   fontSize: "9px",
                   color: agent.color,
-                  letterSpacing: "0.24em",
-                  marginBottom: "8px",
+                  letterSpacing: "0.26em",
+                  marginBottom: "9px",
                   textAlign: isB ? "right" : "left",
                   textTransform: "uppercase",
+                  opacity: 0.9,
                 }}>
                   {agent.name}
                 </div>
                 <div style={{
                   background: bubbleBg,
+                  backdropFilter: "blur(12px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(12px) saturate(140%)",
                   border: `1px solid ${bubbleBorder}`,
                   borderLeft:  !isB ? `2px solid ${agent.color}` : `1px solid ${bubbleBorder}`,
                   borderRight:  isB ? `2px solid ${agent.color}` : `1px solid ${bubbleBorder}`,
-                  borderRadius: isB ? "10px 2px 10px 10px" : "2px 10px 10px 10px",
-                  padding: "16px 20px",
+                  borderRadius: isB ? "12px 2px 12px 12px" : "2px 12px 12px 12px",
+                  padding: "18px 22px",
                   fontSize: "13px",
-                  lineHeight: "1.88",
+                  lineHeight: "1.92",
                   color: "var(--text)",
                   letterSpacing: "0.01em",
                   boxShadow: isCurrentlySpeaking
-                    ? `0 0 20px 2px ${agent.color}38`
-                    : "0 0 0 0 transparent",
-                  transition: "box-shadow 0.42s var(--ease-out)",
+                    ? `inset 0 1px 0 rgba(255,255,255,0.12), 0 0 36px 6px ${agent.color}55`
+                    : "inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 0 transparent",
+                  transition: "box-shadow 0.5s var(--ease-out)",
                 }}>
                   {msg.t || " "}
                   {isCurrentlySpeaking && <span className="cursor">|</span>}
@@ -313,18 +329,19 @@ export default function AgentDialogue() {
       {/* Status */}
       {status && (
         <div style={{
-          display: "flex", alignItems: "center", gap: "8px",
+          display: "flex", alignItems: "center", gap: "10px",
           fontSize: "9px", color: "var(--text-3)",
-          marginTop: "1.75rem",
-          letterSpacing: "0.22em",
+          marginTop: "2.25rem",
+          letterSpacing: "0.28em",
           textTransform: "uppercase",
         }}>
           {running && (
             <div style={{
-              width: "4px", height: "4px", borderRadius: "50%",
-              background: "var(--text-3)",
+              width: "5px", height: "5px", borderRadius: "50%",
+              background: speaker ? AGENTS[speaker].color : "var(--text-3)",
               animation: "pulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
               flexShrink: 0,
+              transition: "background-color 0.4s var(--ease-out)",
             }} />
           )}
           {status}

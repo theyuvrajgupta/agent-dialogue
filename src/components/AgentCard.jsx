@@ -4,31 +4,38 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
 
   const dot = (
     <div style={{
-      width: "5px", height: "5px", borderRadius: "50%",
+      width: "6px", height: "6px", borderRadius: "50%",
       background: agent.color,
-      opacity: isActive ? 1 : 0.45,
-      boxShadow: isActive ? `0 0 8px 2px ${agent.color}88` : "none",
+      opacity: isActive ? 1 : 0.35,
+      boxShadow: isActive ? `0 0 10px 3px ${agent.color}99` : "none",
       flexShrink: 0,
-      transition: "box-shadow 0.36s var(--ease-out), opacity 0.36s var(--ease-out)",
+      transition: "box-shadow 0.4s var(--ease-out), opacity 0.4s var(--ease-out)",
     }} />
   );
 
   return (
     <div style={{
-      background: isActive ? `${agent.color}0F` : "var(--surface)",
+      background: isActive ? `${agent.color}2A` : "rgba(255, 255, 255, 0.05)",
       borderTop: `2px solid ${isActive ? agent.color : agent.color + "55"}`,
-      padding: "1.25rem 1.5rem",
-      transition: "background-color 0.36s var(--ease-out), border-top-color 0.36s var(--ease-out)",
+      boxShadow: isActive
+        ? `inset 0 3px 0 ${agent.color}, inset 0 0 80px ${agent.color}22, inset 0 1px 0 rgba(255,255,255,0.20)`
+        : "inset 0 1px 0 rgba(255,255,255,0.14)",
+      padding: "1.5rem 1.75rem",
+      transition: [
+        "background-color 0.4s var(--ease-out)",
+        "border-top-color 0.4s var(--ease-out)",
+        "box-shadow 0.4s var(--ease-out)",
+      ].join(", "),
     }}>
 
       <div style={{
-        display: "flex", alignItems: "center", gap: "7px",
-        marginBottom: "5px",
+        display: "flex", alignItems: "center", gap: "8px",
+        marginBottom: "6px",
         justifyContent: isB ? "flex-end" : "flex-start",
       }}>
         {!isB && dot}
         <span style={{
-          fontSize: "14px",
+          fontSize: "15px",
           fontFamily: "var(--font-display)",
           fontStyle: "italic",
           fontWeight: 400,
@@ -47,7 +54,7 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
         margin: 0,
         textAlign: isB ? "right" : "left",
         lineHeight: 1.5,
-        letterSpacing: "0.16em",
+        letterSpacing: "0.18em",
         textTransform: "uppercase",
       }}>
         {agent.role}
@@ -60,10 +67,10 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
           fontStyle: "italic",
           fontVariationSettings: '"opsz" 20',
           color: agent.color,
-          margin: "10px 0 0",
+          margin: "12px 0 0",
           textAlign: isB ? "right" : "left",
-          lineHeight: 1.65,
-          opacity: 0.62,
+          lineHeight: 1.7,
+          opacity: 0.7,
         }}>
           {stance}
         </p>
@@ -71,9 +78,9 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
 
       {isActive && (
         <div style={{
-          display: "flex", alignItems: "center", gap: "6px",
+          display: "flex", alignItems: "center", gap: "7px",
           justifyContent: isB ? "flex-end" : "flex-start",
-          marginTop: "12px",
+          marginTop: "14px",
         }}>
           <div style={{
             width: "4px", height: "4px", borderRadius: "50%",
@@ -84,10 +91,11 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
           <span style={{
             fontSize: "9px",
             color: agent.color,
-            letterSpacing: "0.24em",
-            opacity: 0.88,
+            letterSpacing: "0.26em",
+            opacity: 0.9,
+            textTransform: "uppercase",
           }}>
-            {isSpeaking ? "SPEAKING" : "THINKING"}
+            {isSpeaking ? "Speaking" : "Thinking"}
           </span>
         </div>
       )}
