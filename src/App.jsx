@@ -21,9 +21,14 @@ export default function AgentDialogue() {
   const provocationRef = useRef("");
   const audioRef = useRef(null);
   const prefetchControllerRef = useRef(null);
+  const bottomRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
   const TOPIC_MAX = 280;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length]);
 
   useEffect(() => {
     return () => {
@@ -384,6 +389,7 @@ export default function AgentDialogue() {
             </div>
           );
         })}
+        <div ref={bottomRef} />
       </div>
 
       {/* Status */}
