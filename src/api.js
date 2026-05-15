@@ -128,6 +128,34 @@ export async function callAPI({ agentKey, stances, topic, history, provocation, 
   return data.content[0].text;
 }
 
+export async function reframeTopic(topic) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 100,
+      temperature: 0.5,
+      messages: [{
+        role: "user",
+        content: `The following debate topic is not suitable for a senior executive audience — it may be too personal, too vague, or lack enough context for a meaningful AI debate.
+
+Original: "${topic}"
+
+Rewrite it as a sharp, debatable question on the closest meaningful theme involving AI, leadership, or organizational change. Return only the reframed question — no explanation, no quotes.`,
+      }],
+    }),
+  });
+  if (!res.ok) return topic;
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim() ?? topic;
+}
+
 export async function generateProvocation(topic) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

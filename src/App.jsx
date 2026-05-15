@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { AGENTS, STANCES, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
-import { synthesizeAndPlay, callAPI, generateProvocation } from "./api.js";
+import { synthesizeAndPlay, callAPI, generateProvocation, reframeTopic } from "./api.js";
 import AgentCard from "./components/AgentCard.jsx";
 
 export default function AgentDialogue() {
@@ -56,7 +56,14 @@ export default function AgentDialogue() {
     histRef.current = [];
     abortRef.current = false;
 
-    provocationRef.current = await generateProvocation(topic);
+    // Only reframe when the topic is clearly unsuitable — personal name questions or too vague.
+    // Normal topics skip this entirely; the API call is the exception, not the rule.
+    const PERSONAL_Q = /^\s*(do you think|can|will|should|is|was|has)\s+[A-Z][a-zA-Z]+(\s+[A-Z][a-zA-Z]+)+/i;
+    const needsReframe = topic.trim().length < 15 || PERSONAL_Q.test(topic);
+    const effectiveTopic = needsReframe ? await reframeTopic(topic).catch(() => topic) : topic;
+    if (effectiveTopic !== topic) setTopic(effectiveTopic);
+
+    provocationRef.current = await generateProvocation(effectiveTopic);
 
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
     let prefetchPromise = null;
@@ -79,7 +86,7 @@ export default function AgentDialogue() {
           text = (await callAPI({
             agentKey: k,
             stances: stancesRef.current,
-            topic,
+            topic: effectiveTopic,
             history: histRef.current,
             provocation: provocationRef.current,
             turnIndex: i,
@@ -109,7 +116,7 @@ export default function AgentDialogue() {
         prefetchPromise = callAPI({
           agentKey: nextK,
           stances: stancesRef.current,
-          topic,
+          topic: effectiveTopic,
           history: histRef.current,
           provocation: provocationRef.current,
           turnIndex: nextI,
