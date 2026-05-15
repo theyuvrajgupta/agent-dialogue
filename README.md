@@ -2,7 +2,7 @@
 
 A two-agent AI debate interface powered by Claude. Two personas with opposing viewpoints — **The Operator** (skeptical COO, 20 years experience) and **The Futurist** (Chief AI Officer, systems-first thinker) — argue a topic of your choice in real time, with optional voice narration.
 
-Built as a C-suite demo to show what real-time AI agent interaction looks like in practice.
+Built to show what real-time AI agent interaction looks like in practice.
 
 ## Features
 
