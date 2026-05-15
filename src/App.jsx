@@ -205,8 +205,30 @@ export default function AgentDialogue() {
 
       {/* Topic */}
       <div className="fade-up fade-up-4" style={{ marginBottom: "2.25rem" }}>
-        <div style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", marginBottom: "10px", textTransform: "uppercase" }}>
-          Topic
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ fontSize: "9px", letterSpacing: "0.45em", color: "var(--text-3)", textTransform: "uppercase" }}>
+            Topic
+          </div>
+          <button
+            onClick={() => setTopic(pick(TOPICS))}
+            disabled={running}
+            title="Pick a random topic"
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              padding: "4px 10px",
+              fontSize: "9px",
+              letterSpacing: "0.25em",
+              color: "var(--text-3)",
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 3 21 3 21 8"/>
+              <line x1="4" y1="20" x2="21" y2="3"/>
+              <polyline points="21 16 21 21 16 21"/>
+              <line x1="15" y1="15" x2="21" y2="21"/>
+            </svg>
+            SHUFFLE
+          </button>
         </div>
         <textarea
           value={topic}
