@@ -20,6 +20,7 @@ export default function AgentDialogue() {
   const closingArcRef = useRef("");
   const provocationRef = useRef("");
   const audioRef = useRef(null);
+  const prefetchControllerRef = useRef(null);
   const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
 
   const TOPIC_MAX = 280;
@@ -27,6 +28,7 @@ export default function AgentDialogue() {
   useEffect(() => {
     return () => {
       abortRef.current = true;
+      prefetchControllerRef.current?.abort();
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, []);
@@ -49,10 +51,11 @@ export default function AgentDialogue() {
     provocationRef.current = await generateProvocation(topic);
 
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
+    let prefetchPromise = null;
 
     for (let i = 0; i < seq.length; i++) {
       const k = seq[i];
-      if (abortRef.current) break;
+      if (abortRef.current) { prefetchPromise = null; break; }
 
       setSpeaker(k);
       setPhase("thinking");
@@ -60,26 +63,53 @@ export default function AgentDialogue() {
 
       let text;
       try {
-        text = (await callAPI({
-          agentKey: k,
-          stances: stancesRef.current,
-          topic,
-          history: histRef.current,
-          provocation: provocationRef.current,
-          turnIndex: i,
-          totalTurns: seq.length,
-          closingArc: closingArcRef.current,
-        })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
+        if (prefetchPromise) {
+          text = await prefetchPromise;
+          prefetchControllerRef.current = null;
+          prefetchPromise = null;
+        } else {
+          text = (await callAPI({
+            agentKey: k,
+            stances: stancesRef.current,
+            topic,
+            history: histRef.current,
+            provocation: provocationRef.current,
+            turnIndex: i,
+            totalTurns: seq.length,
+            closingArc: closingArcRef.current,
+          })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
+        }
       } catch (e) {
-        setError(e.message);
+        prefetchPromise = null;
+        prefetchControllerRef.current = null;
+        if (!abortRef.current) setError(e.message);
         break;
       }
 
-      if (abortRef.current) break;
+      if (abortRef.current) { prefetchPromise = null; break; }
 
       const displayIndex = histRef.current.length;
       histRef.current = [...histRef.current, { k, t: text }];
       setMessages(prev => [...prev, { k, t: voiceEnabled ? "" : text }]);
+
+      // Kick off next turn's API call while TTS plays — history is already up to date
+      const nextI = i + 1;
+      if (nextI < seq.length) {
+        const nextK = seq[nextI];
+        const ctrl = new AbortController();
+        prefetchControllerRef.current = ctrl;
+        prefetchPromise = callAPI({
+          agentKey: nextK,
+          stances: stancesRef.current,
+          topic,
+          history: histRef.current,
+          provocation: provocationRef.current,
+          turnIndex: nextI,
+          totalTurns: seq.length,
+          closingArc: closingArcRef.current,
+          signal: ctrl.signal,
+        }).then(t => t.replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim());
+      }
 
       setPhase("speaking");
       setStatus(AGENTS[k].name + " is speaking...");
@@ -87,9 +117,18 @@ export default function AgentDialogue() {
         setMessages(prev => prev.map((m, idx) => idx === displayIndex ? { ...m, t: revealed } : m));
       });
 
-      if (abortRef.current) break;
+      if (abortRef.current) {
+        prefetchControllerRef.current?.abort();
+        prefetchControllerRef.current = null;
+        prefetchPromise = null;
+        break;
+      }
       await new Promise(r => setTimeout(r, 300));
     }
+
+    // Safety net: cancel any pre-fetch that outlived the loop
+    prefetchControllerRef.current?.abort();
+    prefetchControllerRef.current = null;
 
     setSpeaker(null);
     setPhase(null);
@@ -99,6 +138,8 @@ export default function AgentDialogue() {
 
   function reset() {
     abortRef.current = true;
+    prefetchControllerRef.current?.abort();
+    prefetchControllerRef.current = null;
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     setMessages([]);
     setStatus("");

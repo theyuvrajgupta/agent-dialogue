@@ -13,6 +13,7 @@ Built to show what real-time AI agent interaction looks like in practice.
 - **Closing arc** — a random closing style (e.g. "land one question they'll sit with", "close on pragmatism") is picked at the start and injected at the last two turns; skipped for 2-turn runs
 - **Voice narration** — ElevenLabs TTS with distinct voices per agent; text streams as audio plays; silently skipped if no key is set
 - **Topic length guard** — capped at 280 characters with a live counter that turns red at 90%
+- **Pre-fetched responses** — next agent's API call runs in parallel with current TTS playback, eliminating dead time between turns; aborted cleanly on reset, unmount, or error via `AbortController`
 - **Unmount safety** — async debate loop aborts cleanly on component unmount; audio pauses and is released
 
 ## Design

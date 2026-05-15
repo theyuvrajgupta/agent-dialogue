@@ -81,7 +81,7 @@ export async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
   });
 }
 
-export async function callAPI({ agentKey, stances, topic, history, provocation, turnIndex, totalTurns, closingArc }) {
+export async function callAPI({ agentKey, stances, topic, history, provocation, turnIndex, totalTurns, closingArc, signal }) {
   const agent = AGENTS[agentKey];
   const other = AGENTS[agentKey === "A" ? "B" : "A"];
   const system = `${agent.baseSystem}\n\nYour current state of mind: ${stances[agentKey]}`;
@@ -114,6 +114,7 @@ export async function callAPI({ agentKey, stances, topic, history, provocation, 
       system,
       messages: [{ role: "user", content: prompt }],
     }),
+    signal,
   });
 
   if (!res.ok) {
