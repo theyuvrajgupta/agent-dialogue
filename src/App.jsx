@@ -74,8 +74,8 @@ export default function AgentDialogue() {
     // stanceHint bypasses generation; empty string falls through to Claude Haiku.
     const [provocation, stanceA, stanceB] = await Promise.all([
       generateProvocation(effectiveTopic),
-      personaA.stanceHint || generateStance(personaA, effectiveTopic),
-      personaB.stanceHint || generateStance(personaB, effectiveTopic),
+      generateStance(personaA, effectiveTopic),
+      generateStance(personaB, effectiveTopic),
     ]);
 
     provocationRef.current = provocation;

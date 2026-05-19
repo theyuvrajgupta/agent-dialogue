@@ -10,7 +10,6 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
   const [description, setDescription] = useState(persona.description);
   const [color, setColor]             = useState(persona.color);
   const [voiceId, setVoiceId]         = useState(persona.voiceId);
-  const [stanceHint, setStanceHint]   = useState(persona.stanceHint ?? "");
 
   function handleSave() {
     onSave(new Persona({
@@ -18,7 +17,6 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
       description: description.trim() || persona.description,
       color,
       voiceId,
-      stanceHint:  stanceHint.trim(),
     }));
   }
 
@@ -151,22 +149,6 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
         </select>
       </div>
 
-      {/* Stance hint */}
-      <div>
-        <span style={labelStyle}>
-          Stance{" "}
-          <span style={{ opacity: 0.45, letterSpacing: "0.1em", textTransform: "none", fontStyle: "italic" }}>
-            optional — leave blank to generate from topic
-          </span>
-        </span>
-        <input
-          type="text"
-          value={stanceHint}
-          onChange={e => setStanceHint(e.target.value)}
-          placeholder="e.g. Just came out of a board meeting where an AI pilot failed badly"
-        />
-      </div>
-
       {/* Actions */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
         <button
@@ -189,7 +171,6 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
             setDescription(preset.description);
             setColor(preset.color);
             setVoiceId(preset.voiceId);
-            setStanceHint("");
             onReset();
           }}
           style={{ padding: "8px 18px", fontSize: "10px", letterSpacing: "0.18em" }}

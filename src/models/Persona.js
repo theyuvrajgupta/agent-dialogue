@@ -5,14 +5,12 @@ export class Persona {
    * @param {string}        config.description  — Role + disposition in free text; shown on card and injected into system prompt
    * @param {string}        config.color        — Hex accent color
    * @param {string}        config.voiceId      — ElevenLabs voice ID
-   * @param {string}        config.stanceHint   — Optional mood override; empty = generate from persona + topic at runtime
    */
-  constructor({ name, description, color, voiceId, stanceHint = "" }) {
+  constructor({ name, description, color, voiceId }) {
     this.name        = name;
     this.description = description;
     this.color       = color;
     this.voiceId     = voiceId;
-    this.stanceHint  = stanceHint; // optional override; empty = generate from persona + topic at runtime
   }
 
   /** System prompt injected into every Claude call for this persona. */
@@ -33,13 +31,12 @@ export class Persona {
       description: this.description,
       color:       this.color,
       voiceId:     this.voiceId,
-      stanceHint:  this.stanceHint,
       ...overrides,
     });
   }
 
   toJSON() {
-    return { name: this.name, description: this.description, color: this.color, voiceId: this.voiceId, stanceHint: this.stanceHint };
+    return { name: this.name, description: this.description, color: this.color, voiceId: this.voiceId };
   }
 
   static fromJSON(data) {
