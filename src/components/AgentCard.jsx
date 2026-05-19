@@ -1,4 +1,11 @@
-export default function AgentCard({ agent, agentKey, isActive, phase, stance }) {
+const PencilIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
+export default function AgentCard({ agent, agentKey, isActive, phase, stance, onEdit }) {
   const isB = agentKey === "B";
   const isSpeaking = isActive && phase === "speaking";
 
@@ -15,6 +22,7 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
 
   return (
     <div style={{
+      position: "relative",
       background: isActive ? `${agent.color}2A` : "rgba(255, 255, 255, 0.05)",
       borderTop: `2px solid ${isActive ? agent.color : agent.color + "55"}`,
       boxShadow: isActive
@@ -27,6 +35,29 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
         "box-shadow 0.4s var(--ease-out)",
       ].join(", "),
     }}>
+
+      {/* Edit button */}
+      {onEdit && (
+        <button
+          onClick={onEdit}
+          title="Edit persona"
+          style={{
+            position: "absolute",
+            top: "14px",
+            ...(isB ? { left: "14px" } : { right: "14px" }),
+            padding: "5px 7px",
+            fontSize: "9px",
+            color: "var(--text-3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            letterSpacing: "0.18em",
+          }}
+        >
+          <PencilIcon />
+          EDIT
+        </button>
+      )}
 
       <div style={{
         display: "flex", alignItems: "center", gap: "8px",
@@ -53,11 +84,13 @@ export default function AgentCard({ agent, agentKey, isActive, phase, stance }) 
         color: "var(--text-2)",
         margin: 0,
         textAlign: isB ? "right" : "left",
-        lineHeight: 1.5,
-        letterSpacing: "0.18em",
+        lineHeight: 1.6,
+        letterSpacing: "0.12em",
         textTransform: "uppercase",
+        paddingRight: isB ? 0 : "2rem",
+        paddingLeft: isB ? "2rem" : 0,
       }}>
-        {agent.role}
+        {agent.description}
       </p>
 
       {stance && (

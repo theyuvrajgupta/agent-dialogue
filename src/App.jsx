@@ -1,31 +1,43 @@
 import { useState, useRef, useEffect } from "react";
-import { AGENTS, STANCES, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
-import { synthesizeAndPlay, callAPI, generateProvocation, reframeTopic } from "./api.js";
+import { PRESET_PERSONAS, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
+import { synthesizeAndPlay, callAPI, generateProvocation, generateStance, reframeTopic } from "./api.js";
 import AgentCard from "./components/AgentCard.jsx";
+import PersonaBuilder from "./components/PersonaBuilder.jsx";
 
 export default function AgentDialogue() {
-  const [turns, setTurns] = useState(4);
-  const [topic, setTopic] = useState(() => pick(TOPICS));
+  const [turns, setTurns]   = useState(4);
+  const [topic, setTopic]   = useState(() => pick(TOPICS));
   const [messages, setMessages] = useState([]);
-  const [running, setRunning] = useState(false);
-  const [speaker, setSpeaker] = useState(null);
-  const [phase, setPhase] = useState(null);
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
+  const [running, setRunning]   = useState(false);
+  const [speaker, setSpeaker]   = useState(null);
+  const [phase, setPhase]       = useState(null);
+  const [status, setStatus]     = useState("");
+  const [error, setError]       = useState("");
   const [stanceDisplay, setStanceDisplay] = useState({ A: "", B: "" });
 
-  const histRef = useRef([]);
-  const abortRef = useRef(false);
-  const stancesRef = useRef({ A: "", B: "" });
-  const closingArcRef = useRef("");
-  const provocationRef = useRef("");
-  const audioRef = useRef(null);
-  const prefetchControllerRef = useRef(null);
-  const bottomRef = useRef(null);
-  const prevMsgCountRef = useRef(0);
-  const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
+  // Persona state — starts from presets, replaceable at any time before running
+  const [personaA, setPersonaA] = useState(PRESET_PERSONAS.A);
+  const [personaB, setPersonaB] = useState(PRESET_PERSONAS.B);
+  const [editingA, setEditingA] = useState(false);
+  const [editingB, setEditingB] = useState(false);
 
+  const histRef               = useRef([]);
+  const abortRef              = useRef(false);
+  const stancesRef            = useRef({ A: "", B: "" });
+  const closingArcRef         = useRef("");
+  const provocationRef        = useRef("");
+  const audioRef              = useRef(null);
+  const prefetchControllerRef = useRef(null);
+  const bottomRef             = useRef(null);
+  const prevMsgCountRef       = useRef(0);
+
+  const voiceEnabled = !!import.meta.env.VITE_ELEVENLABS_API_KEY;
   const TOPIC_MAX = 280;
+
+  // Close editors when dialogue starts
+  useEffect(() => {
+    if (running) { setEditingA(false); setEditingB(false); }
+  }, [running]);
 
   useEffect(() => {
     const isNew = messages.length !== prevMsgCountRef.current;
@@ -44,27 +56,34 @@ export default function AgentDialogue() {
   async function startDialogue() {
     if (running) return;
 
-    const newStances = { A: pick(STANCES.A), B: pick(STANCES.B) };
-    stancesRef.current = newStances;
-    setStanceDisplay(newStances);
-    closingArcRef.current = pick(CLOSING_ARCS);
-
     setRunning(true);
     setMessages([]);
     setError("");
     setStatus("Setting the stage...");
     histRef.current = [];
     abortRef.current = false;
+    closingArcRef.current = pick(CLOSING_ARCS);
 
-    // Only reframe when the topic is clearly unsuitable — personal name questions or too vague.
-    // Normal topics skip this entirely; the API call is the exception, not the rule.
+    // ── Topic reframe (guarded) ──────────────────────────────────────────────
     const PERSONAL_Q = /^\s*(do you think|can|will|should|is|was|has)\s+[A-Z][a-zA-Z]+(\s+[A-Z][a-zA-Z]+)+/i;
     const needsReframe = topic.trim().length < 15 || PERSONAL_Q.test(topic);
     const effectiveTopic = needsReframe ? await reframeTopic(topic).catch(() => topic) : topic;
     if (effectiveTopic !== topic) setTopic(effectiveTopic);
 
-    provocationRef.current = await generateProvocation(effectiveTopic);
+    // ── Parallel setup: provocation + one topic-aware stance per persona ─────
+    // stanceHint bypasses generation; empty string falls through to Claude Haiku.
+    const [provocation, stanceA, stanceB] = await Promise.all([
+      generateProvocation(effectiveTopic),
+      personaA.stanceHint || generateStance(personaA, effectiveTopic),
+      personaB.stanceHint || generateStance(personaB, effectiveTopic),
+    ]);
 
+    provocationRef.current = provocation;
+    const runtimeStances = { A: stanceA, B: stanceB };
+    stancesRef.current = runtimeStances;
+    setStanceDisplay(runtimeStances);
+
+    const personas = { A: personaA, B: personaB };
     const seq = Array.from({ length: turns }, (_, i) => i % 2 === 0 ? "A" : "B");
     let prefetchPromise = null;
 
@@ -74,7 +93,7 @@ export default function AgentDialogue() {
 
       setSpeaker(k);
       setPhase("thinking");
-      setStatus(AGENTS[k].name + " is thinking...");
+      setStatus(personas[k].name + " is thinking...");
 
       let text;
       try {
@@ -84,14 +103,15 @@ export default function AgentDialogue() {
           prefetchPromise = null;
         } else {
           text = (await callAPI({
-            agentKey: k,
-            stances: stancesRef.current,
-            topic: effectiveTopic,
-            history: histRef.current,
-            provocation: provocationRef.current,
-            turnIndex: i,
-            totalTurns: seq.length,
-            closingArc: closingArcRef.current,
+            persona:      personas[k],
+            otherPersona: personas[k === "A" ? "B" : "A"],
+            stance:       stancesRef.current[k],
+            topic:        effectiveTopic,
+            history:      histRef.current,
+            provocation:  provocationRef.current,
+            turnIndex:    i,
+            totalTurns:   seq.length,
+            closingArc:   closingArcRef.current,
           })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
         }
       } catch (e) {
@@ -104,31 +124,33 @@ export default function AgentDialogue() {
       if (abortRef.current) { prefetchPromise = null; break; }
 
       const displayIndex = histRef.current.length;
-      histRef.current = [...histRef.current, { k, t: text }];
+      // Store name in history so callAPI can format it without referencing live state
+      histRef.current = [...histRef.current, { k, name: personas[k].name, t: text }];
       setMessages(prev => [...prev, { k, t: voiceEnabled ? "" : text }]);
 
-      // Kick off next turn's API call while TTS plays — history is already up to date
+      // Kick off next turn's API call while TTS plays
       const nextI = i + 1;
       if (nextI < seq.length) {
         const nextK = seq[nextI];
         const ctrl = new AbortController();
         prefetchControllerRef.current = ctrl;
         prefetchPromise = callAPI({
-          agentKey: nextK,
-          stances: stancesRef.current,
-          topic: effectiveTopic,
-          history: histRef.current,
-          provocation: provocationRef.current,
-          turnIndex: nextI,
-          totalTurns: seq.length,
-          closingArc: closingArcRef.current,
-          signal: ctrl.signal,
+          persona:      personas[nextK],
+          otherPersona: personas[nextK === "A" ? "B" : "A"],
+          stance:       stancesRef.current[nextK],
+          topic:        effectiveTopic,
+          history:      histRef.current,
+          provocation:  provocationRef.current,
+          turnIndex:    nextI,
+          totalTurns:   seq.length,
+          closingArc:   closingArcRef.current,
+          signal:       ctrl.signal,
         }).then(t => t.replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim());
       }
 
       setPhase("speaking");
-      setStatus(AGENTS[k].name + " is speaking...");
-      await synthesizeAndPlay(text, AGENTS[k].voiceId, audioRef, (revealed) => {
+      setStatus(personas[k].name + " is speaking...");
+      await synthesizeAndPlay(text, personas[k].voiceId, audioRef, (revealed) => {
         setMessages(prev => prev.map((m, idx) => idx === displayIndex ? { ...m, t: revealed } : m));
       });
 
@@ -141,7 +163,6 @@ export default function AgentDialogue() {
       await new Promise(r => setTimeout(r, 300));
     }
 
-    // Safety net: cancel any pre-fetch that outlived the loop
     prefetchControllerRef.current?.abort();
     prefetchControllerRef.current = null;
 
@@ -167,6 +188,8 @@ export default function AgentDialogue() {
     closingArcRef.current = "";
     setStanceDisplay({ A: "", B: "" });
   }
+
+  const personas = { A: personaA, B: personaB };
 
   return (
     <div style={{ fontFamily: "var(--font-mono)", padding: "4rem 2.5rem 7rem", maxWidth: "880px", margin: "0 auto" }}>
@@ -259,7 +282,7 @@ export default function AgentDialogue() {
         </div>
       </div>
 
-      {/* Agent cards — unified panel, 1fr 1px 1fr */}
+      {/* Agent panel — unified glassmorphism container */}
       <div className="fade-up fade-up-5" style={{
         display: "grid",
         gridTemplateColumns: "1fr 1px 1fr",
@@ -272,14 +295,63 @@ export default function AgentDialogue() {
         borderRadius: "var(--r-lg)",
         overflow: "hidden",
       }}>
-        <AgentCard agent={AGENTS.A} agentKey="A" isActive={speaker === "A"} phase={phase} stance={stanceDisplay.A} />
+        {/* Slot A */}
+        {editingA
+          ? <PersonaBuilder
+              persona={personaA}
+              agentKey="A"
+              onSave={(p) => { setPersonaA(p); setEditingA(false); }}
+              onReset={() => { setPersonaA(PRESET_PERSONAS.A); setEditingA(false); }}
+              onCancel={() => setEditingA(false)}
+            />
+          : <AgentCard
+              agent={personaA}
+              agentKey="A"
+              isActive={speaker === "A"}
+              phase={phase}
+              stance={stanceDisplay.A}
+              onEdit={!running ? () => { setEditingB(false); setEditingA(true); } : null}
+            />
+        }
+
+        {/* Center divider */}
         <div style={{
           background: "rgba(255, 255, 255, 0.22)",
-          boxShadow: speaker ? `0 0 14px 5px ${AGENTS[speaker].color}66` : "none",
+          boxShadow: speaker ? `0 0 14px 5px ${personas[speaker].color}66` : "none",
           transition: "box-shadow 0.4s var(--ease-out)",
         }} />
-        <AgentCard agent={AGENTS.B} agentKey="B" isActive={speaker === "B"} phase={phase} stance={stanceDisplay.B} />
+
+        {/* Slot B */}
+        {editingB
+          ? <PersonaBuilder
+              persona={personaB}
+              agentKey="B"
+              onSave={(p) => { setPersonaB(p); setEditingB(false); }}
+              onReset={() => { setPersonaB(PRESET_PERSONAS.B); setEditingB(false); }}
+              onCancel={() => setEditingB(false)}
+            />
+          : <AgentCard
+              agent={personaB}
+              agentKey="B"
+              isActive={speaker === "B"}
+              phase={phase}
+              stance={stanceDisplay.B}
+              onEdit={!running ? () => { setEditingA(false); setEditingB(true); } : null}
+            />
+        }
       </div>
+
+      {/* Reset personas to defaults */}
+      {(personaA.name !== PRESET_PERSONAS.A.name || personaB.name !== PRESET_PERSONAS.B.name) && !running && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem", marginTop: "-1rem" }}>
+          <button
+            onClick={() => { setPersonaA(PRESET_PERSONAS.A); setPersonaB(PRESET_PERSONAS.B); setEditingA(false); setEditingB(false); }}
+            style={{ fontSize: "9px", letterSpacing: "0.22em", color: "var(--text-3)", padding: "4px 10px" }}
+          >
+            RESET PERSONAS TO DEFAULT
+          </button>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="fade-up fade-up-6" style={{
@@ -377,7 +449,7 @@ export default function AgentDialogue() {
           </div>
         )}
         {messages.map((msg, i) => {
-          const agent = AGENTS[msg.k];
+          const agent = personas[msg.k];
           const isB = msg.k === "B";
           const isCurrentlySpeaking = running && phase === "speaking" && i === messages.length - 1;
           const bubbleBg     = isB ? "rgba(61,170,132,0.10)"  : "rgba(74,144,217,0.10)";
@@ -436,7 +508,7 @@ export default function AgentDialogue() {
           {running && (
             <div style={{
               width: "5px", height: "5px", borderRadius: "50%",
-              background: speaker ? AGENTS[speaker].color : "var(--text-3)",
+              background: speaker ? personas[speaker].color : "var(--text-3)",
               animation: "pulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
               flexShrink: 0,
               transition: "background-color 0.4s var(--ease-out)",

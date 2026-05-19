@@ -1,4 +1,4 @@
-import { AGENTS } from "./constants.js";
+// ── Word-by-word reveal helpers ───────────────────────────────────────────────
 
 function parseWordTimestamps(alignment) {
   const { characters, character_start_times_seconds } = alignment;
@@ -17,6 +17,8 @@ function parseWordTimestamps(alignment) {
   if (word) words.push({ word, startTime: wordStart });
   return words;
 }
+
+// ── Voice synthesis ───────────────────────────────────────────────────────────
 
 export async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
   const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
@@ -82,16 +84,66 @@ export async function synthesizeAndPlay(text, voiceId, audioRef, onWordReveal) {
   });
 }
 
-export async function callAPI({ agentKey, stances, topic, history, provocation, turnIndex, totalTurns, closingArc, signal }) {
-  const agent = AGENTS[agentKey];
-  const other = AGENTS[agentKey === "A" ? "B" : "A"];
-  const system = `${agent.baseSystem}\n\nYour current state of mind: ${stances[agentKey]}`;
+// ── Topic-aware stance generation ────────────────────────────────────────────
+
+const FALLBACK_STANCE = "You're entering this debate with sharp, well-formed views and you're not in the mood for weak arguments.";
+
+/**
+ * Generates a single emotional context string grounded in both the persona and the topic.
+ * Called at dialogue start unless the user has set a manual stanceHint on the persona.
+ */
+export async function generateStance(persona, topic) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 120,
+      messages: [{
+        role: "user",
+        content: `Write a single short emotional context statement (1–2 sentences) for a debate participant.
+
+Persona: ${persona.name}. ${persona.description}
+Topic: "${topic}"
+
+Describe a specific recent experience or current mindset that's directly relevant to this topic — something that explains why they feel the way they do going into this debate. Be concrete and character-specific. Return the statement only — no quotes, no explanation.`,
+      }],
+    }),
+  });
+
+  if (!res.ok) return FALLBACK_STANCE;
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim() ?? FALLBACK_STANCE;
+}
+
+// ── Dialogue turn generation ──────────────────────────────────────────────────
+
+/**
+ * @param {object}  opts
+ * @param {Persona} opts.persona       — The speaking agent
+ * @param {Persona} opts.otherPersona  — The other agent (for context)
+ * @param {string}  opts.stance        — This turn's emotional context string
+ * @param {string}  opts.topic
+ * @param {Array}   opts.history       — Array of { k, name, t }
+ * @param {string}  opts.provocation
+ * @param {number}  opts.turnIndex
+ * @param {number}  opts.totalTurns
+ * @param {string}  opts.closingArc
+ * @param {AbortSignal} [opts.signal]
+ */
+export async function callAPI({ persona, otherPersona, stance, topic, history, provocation, turnIndex, totalTurns, closingArc, signal }) {
+  const system = `${persona.toSystemPrompt()}\n\nYour current state of mind: ${stance}`;
 
   let prompt = history.length === 0
     ? provocation
       ? `Topic: "${topic}"\n\nSomeone just said: "${provocation}"\n\nThis sparked the debate. React to this as your opening — you're going first.`
       : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
-    : `Topic: "${topic}"\n\nConversation so far:\n${history.map(m => AGENTS[m.k].name + ": " + m.t).join("\n\n")}\n\nRespond directly to ${other.name}'s last point.`;
+    : `Topic: "${topic}"\n\nConversation so far:\n${history.map(m => `${m.name}: ${m.t}`).join("\n\n")}\n\nRespond directly to ${otherPersona.name}'s last point.`;
 
   if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2)
     prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";
@@ -127,6 +179,8 @@ export async function callAPI({ agentKey, stances, topic, history, provocation, 
   if (!data.content?.[0]?.text) throw new Error("Unexpected response format");
   return data.content[0].text;
 }
+
+// ── Topic utilities ───────────────────────────────────────────────────────────
 
 export async function reframeTopic(topic) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
