@@ -180,6 +180,39 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
   return data.content[0].text;
 }
 
+// ── ElevenLabs voice catalogue ───────────────────────────────────────────────
+// Cached per page load — the /v1/voices endpoint is called at most once.
+
+let _voiceCache = null;
+
+function formatVoiceLabel(v) {
+  const gender = v.labels?.gender === "female" ? "F" : v.labels?.gender === "male" ? "M" : null;
+  const accent = v.labels?.accent ? v.labels.accent.charAt(0).toUpperCase() + v.labels.accent.slice(1) : null;
+  const tags = [gender, accent].filter(Boolean).join(", ");
+  return tags ? `${v.name} (${tags})` : v.name;
+}
+
+export async function fetchVoices() {
+  if (_voiceCache) return _voiceCache;
+
+  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+  if (!apiKey) return [];
+
+  const res = await fetch("https://api.elevenlabs.io/v1/voices", {
+    headers: { "xi-api-key": apiKey },
+  });
+
+  if (!res.ok) return [];
+
+  const data = await res.json();
+  _voiceCache = data.voices
+    .filter(v => v.category === "premade")
+    .map(v => ({ id: v.voice_id, label: formatVoiceLabel(v) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  return _voiceCache;
+}
+
 // ── Topic utilities ───────────────────────────────────────────────────────────
 
 export async function reframeTopic(topic) {

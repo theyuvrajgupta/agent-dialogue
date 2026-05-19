@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Persona } from "../models/Persona.js";
 import { PERSONA_COLORS, VOICE_OPTIONS, PRESET_PERSONAS } from "../constants.js";
+import { fetchVoices } from "../api.js";
 
 const DESC_MAX = 200;
 
@@ -10,6 +11,14 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
   const [description, setDescription] = useState(persona.description);
   const [color, setColor]             = useState(persona.color);
   const [voiceId, setVoiceId]         = useState(persona.voiceId);
+  const [voices, setVoices]           = useState(VOICE_OPTIONS);
+  const [voicesLoading, setVoicesLoading] = useState(true);
+
+  useEffect(() => {
+    fetchVoices()
+      .then(v => { if (v.length > 0) setVoices(v); })
+      .finally(() => setVoicesLoading(false));
+  }, []);
 
   function handleSave() {
     onSave(new Persona({
@@ -127,13 +136,22 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
 
       {/* Voice */}
       <div>
-        <span style={labelStyle}>Voice</span>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+          <span style={{ ...labelStyle, marginBottom: 0 }}>Voice</span>
+          {voicesLoading && (
+            <span style={{ fontSize: "9px", color: "var(--text-3)", letterSpacing: "0.18em" }}>
+              Loading...
+            </span>
+          )}
+        </div>
         <select
           value={voiceId}
           onChange={e => setVoiceId(e.target.value)}
+          disabled={voicesLoading}
           style={{
             ...inputStyle,
-            cursor: "pointer",
+            cursor: voicesLoading ? "not-allowed" : "pointer",
+            opacity: voicesLoading ? 0.5 : 1,
             appearance: "none",
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E9EB6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
@@ -141,7 +159,7 @@ export default function PersonaBuilder({ persona, agentKey, onSave, onReset, onC
             paddingRight: "32px",
           }}
         >
-          {VOICE_OPTIONS.map(v => (
+          {voices.map(v => (
             <option key={v.id} value={v.id} style={{ background: "#171720" }}>
               {v.label}
             </option>
