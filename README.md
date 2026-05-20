@@ -6,9 +6,12 @@ Built to show what real-time AI agent interaction looks like in practice.
 
 ## Features
 
-- **Configurable topic and turn count** — type any topic or pick from 12 curated C-suite AI topics loaded at random on every refresh; choose 2, 4, or 6 turns
-- **Randomised stances** — each agent draws a "state of mind" from a pool of 8 per run, so the same topic plays out differently every time
+- **Configurable personas** — edit each agent's name, description, accent color, and voice before running; resets to defaults at any time
+- **Configurable topic and turn count** — type any topic or pick from 12 curated C-suite AI topics loaded at random on every refresh; choose 2, 4, 6, or 8 turns
+- **Dynamic stances** — at dialogue start, Claude Haiku generates a single-sentence topic-aware "state of mind" per persona, so the same topic plays out differently every time
 - **Provocation** — a separate Claude call generates a sharp one-sentence statement before the debate starts; the first agent responds to that, not just the topic in the abstract
+- **Escalation arc** — one of 4 emotional temperature curves picked per run (e.g. calm-to-forceful, skeptical-to-exasperated); a phase signal is injected per turn to drive natural intensity build-up; skipped for 2-turn runs
+- **Forced concession** — at ~40% through the debate, the speaking agent briefly acknowledges one specific thing the opponent said before pivoting back; skipped for runs under 4 turns
 - **Mid-conversation pivot** — at the halfway point, agents are instructed to stop restating their position and engage directly with the opponent's strongest argument
 - **Closing arc** — a random closing style (e.g. "land one question they'll sit with", "close on pragmatism") is picked at the start and injected at the last two turns; skipped for 2-turn runs
 - **Voice narration** — ElevenLabs TTS with distinct voices per agent; text streams as audio plays; silently skipped if no key is set
@@ -31,8 +34,10 @@ Dark glassmorphism UI with no external component library — plain React with in
 ## Stack
 
 - React 19 + Vite (no UI library)
-- Anthropic API — `claude`, `max_tokens: 300`, `temperature: 1`; called directly from the browser with `anthropic-dangerous-direct-browser-access: true`
-- ElevenLabs TTS (optional) — Alice voice for The Operator, Charlie voice for The Futurist
+- Anthropic API — called directly from the browser with `anthropic-dangerous-direct-browser-access: true`
+  - Sonnet (`claude-sonnet-4-20250514`) — dialogue turns, provocation, topic reframe; `max_tokens: 210`, `temperature: 1`
+  - Haiku (`claude-haiku-4-5-20251001`) — stance generation; `max_tokens: 60`
+- ElevenLabs TTS (optional) — Alice voice for The Operator, Charlie voice for The Futurist; voice list fetched live from the API
 - Deployed on Vercel
 
 ## Project structure
@@ -40,15 +45,18 @@ Dark glassmorphism UI with no external component library — plain React with in
 ```
 agent-dialogue/
 ├── src/
-│   ├── App.jsx          # all app logic and layout
-│   ├── api.js           # Anthropic + ElevenLabs API calls
-│   ├── constants.js     # agents, stances, closing arcs, topics
-│   ├── main.jsx         # React entry point
-│   ├── index.css        # design tokens, animations, global elements
+│   ├── App.jsx              # main app logic and UI
+│   ├── api.js               # Anthropic + ElevenLabs API calls
+│   ├── constants.js         # personas, topic pool, arc pools
+│   ├── main.jsx             # React entry point
+│   ├── index.css            # design tokens, animations, global elements
+│   ├── models/
+│   │   └── Persona.js       # Persona class with toSystemPrompt()
 │   └── components/
-│       └── AgentCard.jsx
-├── vercel.json          # SPA routing rewrite
-└── test_voices.py       # ElevenLabs voice audition utility
+│       ├── AgentCard.jsx    # per-agent display card
+│       └── PersonaBuilder.jsx  # in-place persona editor
+├── vercel.json              # SPA routing rewrite
+└── test_voices.py           # ElevenLabs voice audition utility
 ```
 
 ## Getting started
