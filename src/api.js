@@ -162,7 +162,7 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 300,
+      max_tokens: 210,
       temperature: 1,
       system,
       messages: [{ role: "user", content: prompt }],

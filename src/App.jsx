@@ -368,7 +368,7 @@ export default function AgentDialogue() {
             background: "rgba(255, 255, 255, 0.06)",
             boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.16)",
           }}>
-            {[2, 4, 6].map(n => (
+            {[2, 4, 6, 8].map(n => (
               <button key={n} onClick={() => setTurns(n)} disabled={running} style={{
                 padding: "7px 22px",
                 fontSize: "12px",
