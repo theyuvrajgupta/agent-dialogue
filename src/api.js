@@ -148,6 +148,10 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
   const phase = turnIndex === totalTurns - 1 ? 3 : Math.min(3, Math.floor(turnIndex / totalTurns * 4));
   prompt += ` Emotional temperature: ${escalationArc[phase]}`;
 
+  const concessionTurn = totalTurns >= 4 ? Math.floor(totalTurns * 0.4) : -1;
+  if (turnIndex === concessionTurn)
+    prompt += " Before making your next point, briefly acknowledge the one specific thing your opponent just said that actually holds up — then pivot hard back to your position.";
+
   if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2)
     prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";
   if (totalTurns > 2 && turnIndex === totalTurns - 2)
