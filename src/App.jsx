@@ -115,7 +115,7 @@ export default function AgentDialogue() {
             totalTurns:     seq.length,
             closingArc:     closingArcRef.current,
             escalationArc:  escalationArcRef.current,
-          })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
+          })).replace(/[*_#~`]/g, "").replace(/—/g, "-").replace(/…/g, "...").replace(/[""]/g, '"').replace(/['']/g, "'").replace(/\s+/g, " ").trim();
         }
       } catch (e) {
         prefetchPromise = null;
@@ -149,7 +149,7 @@ export default function AgentDialogue() {
           closingArc:     closingArcRef.current,
           escalationArc:  escalationArcRef.current,
           signal:         ctrl.signal,
-        }).then(t => t.replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim());
+        }).then(t => t.replace(/[*_#~`]/g, "").replace(/—/g, "-").replace(/…/g, "...").replace(/[""]/g, '"').replace(/['']/g, "'").replace(/\s+/g, " ").trim());
       }
 
       setPhase("speaking");
