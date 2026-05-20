@@ -103,15 +103,15 @@ export async function generateStance(persona, topic) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 120,
+      max_tokens: 60,
       messages: [{
         role: "user",
-        content: `Write a single short emotional context statement (1–2 sentences) for a debate participant.
+        content: `Write a single sentence emotional context for a debate participant — a specific recent experience or mindset that explains why they feel the way they do going into this debate.
 
 Persona: ${persona.name}. ${persona.description}
 Topic: "${topic}"
 
-Describe a specific recent experience or current mindset that's directly relevant to this topic — something that explains why they feel the way they do going into this debate. Be concrete and character-specific. Return the statement only — no quotes, no explanation.`,
+One sentence only. Concrete and character-specific. No quotes, no explanation.`,
       }],
     }),
   });
