@@ -136,7 +136,7 @@ One sentence only. Concrete and character-specific. No quotes, no explanation.`,
  * @param {string}  opts.closingArc
  * @param {AbortSignal} [opts.signal]
  */
-export async function callAPI({ persona, otherPersona, stance, topic, history, provocation, turnIndex, totalTurns, closingArc, signal }) {
+export async function callAPI({ persona, otherPersona, stance, topic, history, provocation, turnIndex, totalTurns, closingArc, escalationArc, signal }) {
   const system = `${persona.toSystemPrompt()}\n\nYour current state of mind: ${stance}`;
 
   let prompt = history.length === 0
@@ -144,6 +144,9 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
       ? `Topic: "${topic}"\n\nSomeone just said: "${provocation}"\n\nThis sparked the debate. React to this as your opening — you're going first.`
       : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
     : `Topic: "${topic}"\n\nConversation so far:\n${history.map(m => `${m.name}: ${m.t}`).join("\n\n")}\n\nRespond directly to ${otherPersona.name}'s last point.`;
+
+  const phase = turnIndex === totalTurns - 1 ? 3 : Math.min(3, Math.floor(turnIndex / totalTurns * 4));
+  prompt += ` Emotional temperature: ${escalationArc[phase]}`;
 
   if (turnIndex === Math.floor(totalTurns / 2) && totalTurns > 2)
     prompt += " The opening positions are on the table. Stop restating yours — engage directly with the strongest specific point your opponent just made.";

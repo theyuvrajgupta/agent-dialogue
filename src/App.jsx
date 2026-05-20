@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { PRESET_PERSONAS, CLOSING_ARCS, TOPICS, pick } from "./constants.js";
+import { PRESET_PERSONAS, CLOSING_ARCS, ESCALATION_ARCS, TOPICS, pick } from "./constants.js";
 import { synthesizeAndPlay, callAPI, generateProvocation, generateStance, reframeTopic } from "./api.js";
 import AgentCard from "./components/AgentCard.jsx";
 import PersonaBuilder from "./components/PersonaBuilder.jsx";
@@ -26,6 +26,7 @@ export default function AgentDialogue() {
   const stancesRef            = useRef({ A: "", B: "" });
   const closingArcRef         = useRef("");
   const provocationRef        = useRef("");
+  const escalationArcRef      = useRef([]);
   const audioRef              = useRef(null);
   const prefetchControllerRef = useRef(null);
   const bottomRef             = useRef(null);
@@ -62,7 +63,8 @@ export default function AgentDialogue() {
     setStatus("Setting the stage...");
     histRef.current = [];
     abortRef.current = false;
-    closingArcRef.current = pick(CLOSING_ARCS);
+    closingArcRef.current   = pick(CLOSING_ARCS);
+    escalationArcRef.current = pick(ESCALATION_ARCS);
 
     // ── Topic reframe (guarded) ──────────────────────────────────────────────
     const PERSONAL_Q = /^\s*(do you think|can|will|should|is|was|has)\s+[A-Z][a-zA-Z]+(\s+[A-Z][a-zA-Z]+)+/i;
@@ -103,15 +105,16 @@ export default function AgentDialogue() {
           prefetchPromise = null;
         } else {
           text = (await callAPI({
-            persona:      personas[k],
-            otherPersona: personas[k === "A" ? "B" : "A"],
-            stance:       stancesRef.current[k],
-            topic:        effectiveTopic,
-            history:      histRef.current,
-            provocation:  provocationRef.current,
-            turnIndex:    i,
-            totalTurns:   seq.length,
-            closingArc:   closingArcRef.current,
+            persona:        personas[k],
+            otherPersona:   personas[k === "A" ? "B" : "A"],
+            stance:         stancesRef.current[k],
+            topic:          effectiveTopic,
+            history:        histRef.current,
+            provocation:    provocationRef.current,
+            turnIndex:      i,
+            totalTurns:     seq.length,
+            closingArc:     closingArcRef.current,
+            escalationArc:  escalationArcRef.current,
           })).replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim();
         }
       } catch (e) {
@@ -135,16 +138,17 @@ export default function AgentDialogue() {
         const ctrl = new AbortController();
         prefetchControllerRef.current = ctrl;
         prefetchPromise = callAPI({
-          persona:      personas[nextK],
-          otherPersona: personas[nextK === "A" ? "B" : "A"],
-          stance:       stancesRef.current[nextK],
-          topic:        effectiveTopic,
-          history:      histRef.current,
-          provocation:  provocationRef.current,
-          turnIndex:    nextI,
-          totalTurns:   seq.length,
-          closingArc:   closingArcRef.current,
-          signal:       ctrl.signal,
+          persona:        personas[nextK],
+          otherPersona:   personas[nextK === "A" ? "B" : "A"],
+          stance:         stancesRef.current[nextK],
+          topic:          effectiveTopic,
+          history:        histRef.current,
+          provocation:    provocationRef.current,
+          turnIndex:      nextI,
+          totalTurns:     seq.length,
+          closingArc:     closingArcRef.current,
+          escalationArc:  escalationArcRef.current,
+          signal:         ctrl.signal,
         }).then(t => t.replace(/[*_#~`]/g, "").replace(/\s+/g, " ").trim());
       }
 

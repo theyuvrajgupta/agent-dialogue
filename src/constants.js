@@ -39,6 +39,36 @@ export const PRESET_PERSONAS = {
   }),
 };
 
+// ── Emotional temperature curve injected per-turn ────────────────────────────
+// Each arc is 4 phases: [opening, building, peak, closing].
+// Phase is derived from turn position; both agents follow the same arc per run.
+export const ESCALATION_ARCS = [
+  [
+    "You're composed — opening your position with quiet confidence.",
+    "You're more engaged now, pushing back with growing conviction.",
+    "You're sharper and less patient. This matters and you're not hiding it.",
+    "You're at your most forceful. Say exactly what you think, plainly.",
+  ],
+  [
+    "You're giving the other side some benefit of the doubt — for now.",
+    "Your skepticism is hardening. You're starting to see familiar patterns.",
+    "You're frustrated. You've heard versions of this before and you know how they end.",
+    "You're done being diplomatic. Land your point without softening it.",
+  ],
+  [
+    "You're confident and methodical — you've thought about this more than most.",
+    "Still confident, but something they said is making you think harder.",
+    "You're holding your ground but you feel the weight of the other side.",
+    "You're still standing firm — with more conviction than you started with.",
+  ],
+  [
+    "You're genuinely curious — this is a problem worth turning over.",
+    "Your curiosity is sharpening into a clear point of view.",
+    "You've formed a position and you're done hedging.",
+    "You're direct and settled. Close on the clearest version of what you believe.",
+  ],
+];
+
 // ── Narrative arc injected into the final turn ────────────────────────────────
 export const CLOSING_ARCS = [
   "You want to land one question they'll have to sit with long after this conversation ends. Make it sharp and specific.",
