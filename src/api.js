@@ -145,8 +145,10 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
       : `Topic: "${topic}"\n\nYou are opening the dialogue. State your position clearly and concisely.`
     : `Topic: "${topic}"\n\nConversation so far:\n${history.map(m => `${m.name}: ${m.t}`).join("\n\n")}\n\nRespond directly to ${otherPersona.name}'s last point.`;
 
-  const phase = turnIndex === totalTurns - 1 ? 3 : Math.min(3, Math.floor(turnIndex / totalTurns * 4));
-  prompt += ` Emotional temperature: ${escalationArc[phase]}`;
+  if (totalTurns > 2) {
+    const phase = turnIndex === totalTurns - 1 ? 3 : Math.min(3, Math.floor(turnIndex / totalTurns * 4));
+    prompt += ` Emotional temperature: ${escalationArc[phase]}`;
+  }
 
   const concessionTurn = totalTurns >= 4 ? Math.floor(totalTurns * 0.4) : -1;
   if (turnIndex === concessionTurn)
