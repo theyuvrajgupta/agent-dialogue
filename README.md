@@ -43,8 +43,8 @@ Dark glassmorphism UI — no component library, plain React with inline styles a
 | Layer | Detail |
 |-------|--------|
 | Frontend | React 19 + Vite, no UI library |
-| AI — dialogue | Sonnet `claude-sonnet-4-20250514` · `max_tokens: 210` · `temperature: 1` |
-| AI — stances | Haiku `claude-haiku-4-5-20251001` · `max_tokens: 60` |
+| AI — dialogue | Sonnet `claude-sonnet` · `max_tokens: 210` · `temperature: 1` |
+| AI — stances | Haiku `claude-haiku` · `max_tokens: 60` |
 | Voice | ElevenLabs TTS (optional) · voice list fetched live from API |
 | Hosting | Vercel |
 
