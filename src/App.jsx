@@ -67,7 +67,7 @@ export default function AgentDialogue() {
     escalationArcRef.current = pick(ESCALATION_ARCS);
 
     // ── Topic reframe (guarded) ──────────────────────────────────────────────
-    const PERSONAL_Q = /^\s*(do you think|can|will|should|is|was|has)\s+[A-Z][a-zA-Z]+(\s+[A-Z][a-zA-Z]+)+/i;
+    const PERSONAL_Q = /^\s*(?:[Dd]o you think|[Cc]an|[Ww]ill|[Ss]hould|[Ii]s|[Ww]as|[Hh]as)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+/;
     const needsReframe = topic.trim().length < 15 || PERSONAL_Q.test(topic);
     const effectiveTopic = needsReframe ? await reframeTopic(topic).catch(() => topic) : topic;
     if (effectiveTopic !== topic) setTopic(effectiveTopic);
