@@ -170,7 +170,7 @@ export async function callAPI({ persona, otherPersona, stance, topic, history, p
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 210,
       temperature: 1,
       system,
@@ -234,7 +234,7 @@ export async function reframeTopic(topic) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 100,
       temperature: 0.5,
       messages: [{
@@ -262,7 +262,7 @@ export async function generateProvocation(topic) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 80,
       temperature: 1,
       messages: [{

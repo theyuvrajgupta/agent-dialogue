@@ -41,7 +41,7 @@ VITE_ELEVENLABS_API_KEY=  # optional, enables voice
 ```
 
 ## Models
-- **Sonnet** (`claude-sonnet-4-20250514`) — dialogue turns, provocation, topic reframe; `max_tokens: 210`, `temperature: 1`
+- **Sonnet** (`claude-sonnet-4-6`) — dialogue turns, provocation, topic reframe; `max_tokens: 210`, `temperature: 1`
 - **Haiku** (`claude-haiku-4-5-20251001`) — stance generation only; `max_tokens: 60`
 
 ## Turn options
